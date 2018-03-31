@@ -30,33 +30,58 @@
 
 #ifdef DBGMSG
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <stdlib.h>
+//#include <stdlib.h> //getenv
+//#include <errno.h> //program_invocation_short_name
+#include <string.h> //strlen
 
 #include "dbgmsg.h"
 
-using namespace std;
+stringstream dbgmsg::ssDbgMsgTmp;
+ofstream dbgmsg::fldDbgMsg;
+stringstream dbgmsg::ssDbgMsgFileName;
+stringstream* dbgmsg::pssDbgMsgPath=NULL;
 
-ofstream fldDbgMsg;
-stringstream ssDbgMsgFileName;
-stringstream ssDbgMsgTmp;
-void dbgmsg(stringstream& ss){
+void dbgmsg::SetDebugLogPath(const char* c){
+  if(c!=NULL){
+    ssDbgMsgPath().str(std::string()); //actually clear/empty it = ""
+    ssDbgMsgPath()<<c;
+    cout<<"DBGMSG: set path: "<<ssDbgMsgPath().str()<<endl;
+  }
+  //TODO validate path ?
+}
+
+void dbgmsg::addDbgmsg(stringstream& ss){
+  ostream& o=cout; //self debug if needed (beware to not send NULL to it or that output will break!!!)
   if(ssDbgMsgFileName.str().empty()){
-    char* c = getenv("DBGMSG_ABSFILE");
-    if(!c){
-      ssDbgMsgFileName<<c;
-    }else{
+    ssDbgMsgPath()<<"";
+
+    // path
 #ifdef UNIX
-      ssDbgMsgFileName<<getenv("HOME");
-      c = getenv("DBGMSG_RELFILE");
-      if(!c){
-        ssDbgMsgFileName<<c;
-      }
-#endif
-      ssDbgMsgFileName<<".dbgmsg.log";
+    if(ssDbgMsgPath().str().empty()){
+      ssDbgMsgPath()<<getenv("HOME")<<"/";
     }
+#endif
+
+    if(!ssDbgMsgPath().str().empty()){
+      ssDbgMsgFileName<<ssDbgMsgPath().str()<<"/"; //TODO test
+    }else{
+      ssDbgMsgFileName<<"./";
+    }
+
+    // filename
+#ifdef __USE_GNU
+    char* c=program_invocation_short_name; //auto "guess work" that should work fine
+    if(c!=NULL){
+      ssDbgMsgFileName<<"."<<c; //TODO test
+    }
+#else
+    ssDbgMsgFileName<<".pid"<<::getpid(); //TODO test
+#endif
+
+    ssDbgMsgFileName<<".dbgmsg.log"; //suffix
+
+    cerr<<"dbgmsgLogE:"<<ssDbgMsgFileName.str()<<endl; //sometimes cerr wont show anything (broken by NULL?)
+    cout<<"dbgmsgLogO:"<<ssDbgMsgFileName.str()<<endl; //sometimes cout wont show anything (broken by NULL?)
   }
 
   if(!fldDbgMsg.is_open()){
@@ -64,7 +89,8 @@ void dbgmsg(stringstream& ss){
   }
 
   fldDbgMsg<<ss.str()<<endl;
-  ssDbgMsgTmp.clear();
+  ssDbgMsgTmp.str(std::string()); //actually clear/empty it = ""
+  fldDbgMsg.flush();
 }
 
 #endif

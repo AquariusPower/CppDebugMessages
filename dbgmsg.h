@@ -35,10 +35,29 @@
   #define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 
   #ifdef DBGMSG
+    #include <iostream>
+    #include <fstream>
+    #include <sstream>
+//    #include <iosfwd>
+
+    using namespace std;
+
+    class dbgmsg{
+      public:
+        static stringstream ssDbgMsgTmp;
+        static void addDbgmsg(stringstream& ss);
+        static void SetDebugLogPath(const char* c);
+        static stringstream& ssDbgMsgPath(){ if(pssDbgMsgPath==NULL)pssDbgMsgPath=new stringstream();return (*pssDbgMsgPath); } // had to be a pointer, would not initialize causing segfault...
+        ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
+      private:
+        static ofstream fldDbgMsg;
+        static stringstream ssDbgMsgFileName;
+        static stringstream* pssDbgMsgPath;
+    };
 
     /* easy/non-cumbersome debug messages */
-//    #define DBGSS(s) dbgmsg(ssDbgMsgTmp<<" "<<__FILENAME__<<":"<<__LINE__<<":"<<s)
-    #define DBGSS(s) {ssDbgMsgTmp<<" "<<__FILENAME__<<":"<<__LINE__<<":"<<s;dbgmsg(ssDbgMsgTmp);}
+    #define DBGSS(s) {dbgmsg::ssDbgMsgTmp<<" "<<__FILENAME__<<":"<<__LINE__<<":"<<s;dbgmsg::addDbgmsg(dbgmsg::ssDbgMsgTmp);}
+    // below wasnt intended to look cool, but... it does :)
     #define DBG1(a) DBGSS(":("<<a<<")")
     #define DBG2(a,b) DBGSS("("<<a<<")("<<b<<")")
     #define DBG3(a,b,c) DBGSS("("<<a<<")("<<b<<")("<<c<<")")
