@@ -47,12 +47,14 @@
         static stringstream ssDbgMsgTmp;
         static void addDbgmsg(stringstream& ss);
         static void SetDebugLogPath(const char* c);
+        static void SetAllowPidOnLogName(){bPidAllowed=true;}
         static stringstream& ssDbgMsgPath(){ if(pssDbgMsgPath==NULL)pssDbgMsgPath=new stringstream();return (*pssDbgMsgPath); } // had to be a pointer, would not initialize causing segfault...
         ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
       private:
         static ofstream fldDbgMsg;
         static stringstream ssDbgMsgFileName;
         static stringstream* pssDbgMsgPath;
+        static bool bPidAllowed;
     };
 
     /* easy/non-cumbersome debug messages */

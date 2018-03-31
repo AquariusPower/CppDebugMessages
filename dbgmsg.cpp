@@ -33,6 +33,7 @@
 //#include <stdlib.h> //getenv
 //#include <errno.h> //program_invocation_short_name
 #include <string.h> //strlen
+#include <unistd.h> //std::getpid()
 
 #include "dbgmsg.h"
 
@@ -40,6 +41,7 @@ stringstream dbgmsg::ssDbgMsgTmp;
 ofstream dbgmsg::fldDbgMsg;
 stringstream dbgmsg::ssDbgMsgFileName;
 stringstream* dbgmsg::pssDbgMsgPath=NULL;
+bool dbgmsg::bPidAllowed=false;
 
 void dbgmsg::SetDebugLogPath(const char* c){
   if(c!=NULL){
@@ -63,7 +65,7 @@ void dbgmsg::addDbgmsg(stringstream& ss){
 #endif
 
     if(!ssDbgMsgPath().str().empty()){
-      ssDbgMsgFileName<<ssDbgMsgPath().str()<<"/"; //TODO test
+      ssDbgMsgFileName<<ssDbgMsgPath().str()<<"/";
     }else{
       ssDbgMsgFileName<<"./";
     }
@@ -72,11 +74,12 @@ void dbgmsg::addDbgmsg(stringstream& ss){
 #ifdef __USE_GNU
     char* c=program_invocation_short_name; //auto "guess work" that should work fine
     if(c!=NULL){
-      ssDbgMsgFileName<<"."<<c; //TODO test
+      ssDbgMsgFileName<<"."<<c;
     }
-#else
-    ssDbgMsgFileName<<".pid"<<::getpid(); //TODO test
 #endif
+
+    //TODO add date/time on filename
+    if(bPidAllowed)ssDbgMsgFileName<<".pid"<<::getpid();
 
     ssDbgMsgFileName<<".dbgmsg.log"; //suffix
 
