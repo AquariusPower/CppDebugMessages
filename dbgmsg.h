@@ -69,20 +69,22 @@
     #define DBG7(a,b,c,d,e,f,g) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")")
     #define DBG8(a,b,c,d,e,f,g,h) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")")
     #define DBG9(a,b,c,d,e,f,g,h,i) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")("<<i<<")")
+    #define DBGLN DBGSS("(ReachedHere)")
     #define DBGOK DBG2("Ok?",(bOk?"true":"false")) //usage: try to disable it, one check per line, when there are too many conditions to check
 
-  #else //to cleanup at compile time
+  #else //to properly cleanup at compile time
 
-    #define DBGSS
-    #define DBG1
-    #define DBG2
-    #define DBG3
-    #define DBG4
-    #define DBG5
-    #define DBG6
-    #define DBG7
-    #define DBG8
-    #define DBG9
+    #define DBGSS(s)
+    #define DBG1(a)
+    #define DBG2(a,b)
+    #define DBG3(a,b,c)
+    #define DBG4(a,b,c,d)
+    #define DBG5(a,b,c,d,e)
+    #define DBG6(a,b,c,d,e,f)
+    #define DBG7(a,b,c,d,e,f,g)
+    #define DBG8(a,b,c,d,e,f,g,h)
+    #define DBG9(a,b,c,d,e,f,g,h,i)
+    #define DBGLN
     #define DBGOK
 
   #endif
