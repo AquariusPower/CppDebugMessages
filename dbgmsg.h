@@ -45,12 +45,14 @@
     class dbgmsg{
       public:
         static stringstream ssDbgMsgTmp;
+        static void addDbgmsgTmp();
         static void addDbgmsg(stringstream& ss);
         static void SetDebugLogPath(const char* c);
         static void SetAllowPidOnLogName(){bPidAllowed=true;}
         static stringstream& ssDbgMsgPath(){ if(pssDbgMsgPath==NULL)pssDbgMsgPath=new stringstream();return (*pssDbgMsgPath); } // had to be a pointer, would not initialize causing segfault...
         ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
       private:
+        static unsigned long long llDbgmsgId;
         static ofstream fldDbgMsg;
         static stringstream ssDbgMsgFileName;
         static stringstream* pssDbgMsgPath;
@@ -58,9 +60,10 @@
     };
 
     /* easy/non-cumbersome debug messages */
-    #define DBGSS(s) {dbgmsg::ssDbgMsgTmp<<" "<<__FILENAME__<<":"<<__LINE__<<":"<<s;dbgmsg::addDbgmsg(dbgmsg::ssDbgMsgTmp);}
+    #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<s; dbgmsg::addDbgmsgTmp(); }
+    //TODO #define DBGN(chk) "("<<(chk==NULL?"NULL":chk)<<")"
     // below wasnt intended to look cool, but... it does :)
-    #define DBG1(a) DBGSS(":("<<a<<")")
+    #define DBG1(a) DBGSS("("<<a<<")")
     #define DBG2(a,b) DBGSS("("<<a<<")("<<b<<")")
     #define DBG3(a,b,c) DBGSS("("<<a<<")("<<b<<")("<<c<<")")
     #define DBG4(a,b,c,d) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")")

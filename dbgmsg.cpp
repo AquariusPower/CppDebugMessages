@@ -42,6 +42,7 @@ ofstream dbgmsg::fldDbgMsg;
 stringstream dbgmsg::ssDbgMsgFileName;
 stringstream* dbgmsg::pssDbgMsgPath=NULL;
 bool dbgmsg::bPidAllowed=false;
+unsigned long long dbgmsg::llDbgmsgId=0;
 
 void dbgmsg::SetDebugLogPath(const char* c){
   if(c!=NULL){
@@ -52,6 +53,19 @@ void dbgmsg::SetDebugLogPath(const char* c){
   //TODO validate path ?
 }
 
+void dbgmsg::addDbgmsgTmp(){
+  addDbgmsg(ssDbgMsgTmp);
+  ssDbgMsgTmp.str(std::string()); //empty it
+
+  // if there was a NULL, it will break the temp stream variable
+  ssDbgMsgTmp<<"test";
+  if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
+    fldDbgMsg<<" "<<"!!!!!!!!!!!! DbgMsg problem: some NULL went to the stream !!!!!!!!!!!!"<<endl;
+  }
+  ssDbgMsgTmp.str(std::string()); //empty it from "test" now
+
+  ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
+}
 void dbgmsg::addDbgmsg(stringstream& ss){
   ostream& o=cout; //self debug if needed (beware to not send NULL to it or that output will break!!!)
   if(ssDbgMsgFileName.str().empty()){
@@ -91,8 +105,7 @@ void dbgmsg::addDbgmsg(stringstream& ss){
     fldDbgMsg.open(ssDbgMsgFileName.str());
   }
 
-  fldDbgMsg<<ss.str()<<endl;
-  ssDbgMsgTmp.str(std::string()); //actually clear/empty it = ""
+  fldDbgMsg<<" "<<(llDbgmsgId++)<<" #"<<ss.str()<<endl;
   fldDbgMsg.flush();
 }
 
