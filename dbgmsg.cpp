@@ -28,6 +28,13 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// this is also easy helper copy/paste to cpp files
+#ifdef DBGMSG
+  #include "dbgmsg.h"
+#else
+  #include "rmdbgmsg.h"
+#endif
+
 #ifdef DBGMSG
 
 //#include <stdlib.h> //getenv
@@ -35,78 +42,175 @@
 #include <string.h> //strlen
 #include <unistd.h> //std::getpid()
 
-#include "dbgmsg.h"
-
-stringstream dbgmsg::ssDbgMsgTmp;
-ofstream dbgmsg::fldDbgMsg;
-stringstream dbgmsg::ssDbgMsgFileName;
-stringstream* dbgmsg::pssDbgMsgPath=NULL;
+std::stringstream dbgmsg::ssDbgMsgTmp;
+std::ofstream dbgmsg::fldDbgMsg;
+std::stringstream dbgmsg::ssDbgMsgFileName;
+std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
 bool dbgmsg::bPidAllowed=false;
 unsigned long long dbgmsg::llDbgmsgId=0;
+
+std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault...
+  if(pssDbgMsgPath==NULL)pssDbgMsgPath=new std::stringstream();
+  return (*pssDbgMsgPath);
+}
 
 void dbgmsg::SetDebugLogPath(const char* c){
   if(c!=NULL){
     ssDbgMsgPath().str(std::string()); //actually clear/empty it = ""
     ssDbgMsgPath()<<c;
-    cout<<"DBGMSG: set path: "<<ssDbgMsgPath().str()<<endl;
+    std::cout.flush();std::cout.clear(); //fit it if needed
+    std::cout<<"DBGMSG: set path: "<<ssDbgMsgPath().str()<<std::endl;
   }
   //TODO validate path ?
 }
 
-void dbgmsg::addDbgmsgTmp(){
-  addDbgmsg(ssDbgMsgTmp);
-  ssDbgMsgTmp.str(std::string()); //empty it
+int iBufSize=256; //TODO 1024? whatsa good value?
+/**
+ * return value needs to be free()
+ */
+char** dbgmsg::getCurrentStackTrace(bool bShowNow,int& riTot){
+  void* paStkBuff[iBufSize];
+  riTot = backtrace(paStkBuff, iBufSize); //get it
 
-  // if there was a NULL, it will break the temp stream variable
-  ssDbgMsgTmp<<"test";
-  if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
-    fldDbgMsg<<" "<<"!!!!!!!!!!!! DbgMsg problem: some NULL went to the stream !!!!!!!!!!!!"<<endl;
+  if(bShowNow){ // STDERR only
+    //for safety/failProof try, just directly show the details on term
+    //TODO try/catch?
+    std::cerr.flush();std::cerr.clear(); //fit it if needed
+    std::cerr<<"DBGMSG:CurrentStackTrace:Begin"<<std::endl;
+    backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);
+    std::cerr<<"DBGMSG:CurrentStackTrace:End"<<std::endl;
   }
-  ssDbgMsgTmp.str(std::string()); //empty it from "test" now
 
-  ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
+  return backtrace_symbols(paStkBuff,riTot);;
 }
-void dbgmsg::addDbgmsg(stringstream& ss){
-  ostream& o=cout; //self debug if needed (beware to not send NULL to it or that output will break!!!)
-  if(ssDbgMsgFileName.str().empty()){
-    ssDbgMsgPath()<<"";
 
-    // path
+std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
+  int iTot=0;
+  char** paBtSymb = getCurrentStackTrace(bShowNow,iTot);
+
+  std::stringstream ss;
+  //  for(int i=0;i<iBufSize;i++){
+  for(int i=0;i<iTot;i++){
+    char* c=paBtSymb[i];
+    if(c==NULL)break;
+    ss<<"\t"<<c<<std::endl;
+  }
+  free(paBtSymb);
+
+  if(bLog)addDbgMsgLog(ss);
+
+  return ss;
+}
+
+void dbgmsg::SigHndlr(int iSig)
+{
+  char* cSigName=strsignal(iSig);
+  std::cerr.flush();std::cerr.clear(); //try to make it sure STDERR will work!
+  std::cerr<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'"<<std::endl; //show it if possible
+
+  // send to stdout too
+  std::cout.flush();
+  std::cout.clear(); //try to make it sure STDOUT will work!
+  std::cout<<cSigName<<std::endl; //show it if possible
+
+  //store on log file
+  getCurrentStackTraceSS(true,true); //TODO this output to log file is not working
+
+  exit(iSig); //1 or something else to just identify it was handled?
+}
+
+void dbgmsg::init(){
+  #ifdef UNIX
+    initSignals();
+  #endif
+
+  initStream();
+}
+
 #ifdef UNIX
-    if(ssDbgMsgPath().str().empty()){
-      ssDbgMsgPath()<<getenv("HOME")<<"/";
-    }
+void dbgmsg::initSignals(){
+  // as specified at `info signal`
+  //TODO determine if these handlers are already set (unless it will just add the handler)
+  signal(SIGHUP , dbgmsg::SigHndlr);
+  signal(SIGINT , dbgmsg::SigHndlr);
+  signal(SIGQUIT, dbgmsg::SigHndlr);
+  signal(SIGILL , dbgmsg::SigHndlr);
+  signal(SIGABRT, dbgmsg::SigHndlr);
+  signal(SIGFPE , dbgmsg::SigHndlr);
+  signal(SIGKILL, dbgmsg::SigHndlr);
+  signal(SIGSEGV, dbgmsg::SigHndlr);
+  signal(SIGPIPE, dbgmsg::SigHndlr);
+  signal(SIGTERM, dbgmsg::SigHndlr);
+  signal(SIGBUS , dbgmsg::SigHndlr);
+  signal(SIGSYS , dbgmsg::SigHndlr);
+  signal(SIGTRAP, dbgmsg::SigHndlr);
+  //? SIGXFSZ
+}
 #endif
 
-    if(!ssDbgMsgPath().str().empty()){
-      ssDbgMsgFileName<<ssDbgMsgPath().str()<<"/";
-    }else{
-      ssDbgMsgFileName<<"./";
-    }
+void dbgmsg::initStream(){
+  ssDbgMsgPath()<<"";
 
-    // filename
+  // path
+#ifdef UNIX
+  if(ssDbgMsgPath().str().empty()){
+    ssDbgMsgPath()<<getenv("HOME")<<"/";
+  }
+#endif
+
+  if(!ssDbgMsgPath().str().empty()){
+    ssDbgMsgFileName<<ssDbgMsgPath().str()<<"/";
+  }else{
+    ssDbgMsgFileName<<"./";
+  }
+
+  // filename
 #ifdef __USE_GNU
-    char* c=program_invocation_short_name; //auto "guess work" that should work fine
-    if(c!=NULL){
-      ssDbgMsgFileName<<"."<<c;
-    }
+  char* c=program_invocation_short_name; //auto "guess work" that should work fine
+  if(c!=NULL){
+    ssDbgMsgFileName<<"."<<c;
+  }
 #endif
 
-    //TODO add date/time on filename
-    if(bPidAllowed)ssDbgMsgFileName<<".pid"<<::getpid();
+  //TODO add date/time on filename
+  if(bPidAllowed)ssDbgMsgFileName<<".pid"<<::getpid();
 
-    ssDbgMsgFileName<<".dbgmsg.log"; //suffix
+  ssDbgMsgFileName<<".dbgmsg.log"; //suffix
 
-    cerr<<"dbgmsgLogE:"<<ssDbgMsgFileName.str()<<endl; //sometimes cerr wont show anything (broken by NULL?)
-    cout<<"dbgmsgLogO:"<<ssDbgMsgFileName.str()<<endl; //sometimes cout wont show anything (broken by NULL?)
+  std::cerr.flush();std::cerr.clear();//fix if needed
+  std::cerr<<"dbgmsgLogE:"<<ssDbgMsgFileName.str()<<std::endl; //sometimes cerr wont show anything (broken by NULL?)
+  std::cout.flush();std::cout.clear();//fix if needed
+  std::cout<<"dbgmsgLogO:"<<ssDbgMsgFileName.str()<<std::endl; //sometimes cout wont show anything (broken by NULL?)
+}
+
+void dbgmsg::addDbgMsgLog(std::stringstream& ss){
+  std::ostream& o=std::cout; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
+  //debug self helper, put anywhere: std::cerr<<"RM:"<<__LINE__<<std::endl;
+
+  if(ssDbgMsgFileName.str().empty()){
+    init();
   }
 
   if(!fldDbgMsg.is_open()){
     fldDbgMsg.open(ssDbgMsgFileName.str());
   }
 
-  fldDbgMsg<<" "<<(llDbgmsgId++)<<" #"<<ss.str()<<endl;
+  fldDbgMsg<<" "<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
   fldDbgMsg.flush();
+}
+
+void dbgmsg::addDbgMsgLogTmp(){
+  addDbgMsgLog(ssDbgMsgTmp);
+  ssDbgMsgTmp.str(std::string()); //empty it
+
+  // if there was a NULL, it will break the temp stream variable
+  ssDbgMsgTmp<<"test";
+  if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
+    fldDbgMsg<<" "<<"!!!!!!!!!!!! DbgMsg problem: some NULL went to the stream !!!!!!!!!!!!"<<std::endl;
+  }
+  ssDbgMsgTmp.str(std::string()); //empty it from "test" now
+
+  ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
 }
 
 #endif

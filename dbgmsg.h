@@ -32,35 +32,50 @@
   #define __DBGMSG_H__
 
   // filename only depends on cpp core
-  #define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+  #define __FILENAME__ (__builtin_strrchr(__FILE__,'/') ? __builtin_strrchr(__FILE__,'/')+1 : __FILE__)
 
   #ifdef DBGMSG
     #include <iostream>
     #include <fstream>
     #include <sstream>
-//    #include <iosfwd>
 
-    using namespace std;
+    #ifdef UNIX
+    #include <execinfo.h>
+    #include <signal.h>
+    #endif
+
+    // It would force std on everything... do not use! //using namespace std;
 
     class dbgmsg{
       public:
-        static stringstream ssDbgMsgTmp;
-        static void addDbgmsgTmp();
-        static void addDbgmsg(stringstream& ss);
+        static std::stringstream ssDbgMsgTmp;
+        static void addDbgMsgLogTmp();
+        static void addDbgMsgLog(std::stringstream& ss);
         static void SetDebugLogPath(const char* c);
         static void SetAllowPidOnLogName(){bPidAllowed=true;}
-        static stringstream& ssDbgMsgPath(){ if(pssDbgMsgPath==NULL)pssDbgMsgPath=new stringstream();return (*pssDbgMsgPath); } // had to be a pointer, would not initialize causing segfault...
+        static std::stringstream& ssDbgMsgPath();
         ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
+        #ifdef UNIX
+          static void SigHndlr(int iSig);
+          static char**            getCurrentStackTrace  (bool bShowNow, int& riTot);
+          static std::stringstream getCurrentStackTraceSS(bool bShowNow, bool bLog );
+        #endif
       private:
+        static void init();
+        #ifdef UNIX
+          static void initSignals();
+        #endif
+        static void initStream();
         static unsigned long long llDbgmsgId;
-        static ofstream fldDbgMsg;
-        static stringstream ssDbgMsgFileName;
-        static stringstream* pssDbgMsgPath;
+        static std::ofstream fldDbgMsg;
+        static std::stringstream ssDbgMsgFileName;
+        static std::stringstream* pssDbgMsgPath;
         static bool bPidAllowed;
     };
 
     /* easy/non-cumbersome debug messages */
-    #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<s; dbgmsg::addDbgmsgTmp(); }
+    // base stream SS
+    #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<s; dbgmsg::addDbgMsgLogTmp(); }
     //TODO #define DBGN(chk) "("<<(chk==NULL?"NULL":chk)<<")"
     // below wasnt intended to look cool, but... it does :)
     #define DBG1(a) DBGSS("("<<a<<")")
@@ -74,22 +89,10 @@
     #define DBG9(a,b,c,d,e,f,g,h,i) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")("<<i<<")")
     #define DBGLN DBGSS("(ReachedHere)")
     #define DBGOK DBG2("Ok?",(bOk?"true":"false")) //usage: try to disable it, one check per line, when there are too many conditions to check
+    #ifdef UNIX
+      #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
+    #endif
 
-  #else //to properly cleanup at compile time
+  #endif //DBGMSG
 
-    #define DBGSS(s)
-    #define DBG1(a)
-    #define DBG2(a,b)
-    #define DBG3(a,b,c)
-    #define DBG4(a,b,c,d)
-    #define DBG5(a,b,c,d,e)
-    #define DBG6(a,b,c,d,e,f)
-    #define DBG7(a,b,c,d,e,f,g)
-    #define DBG8(a,b,c,d,e,f,g,h)
-    #define DBG9(a,b,c,d,e,f,g,h,i)
-    #define DBGLN
-    #define DBGOK
-
-  #endif
-
-#endif
+#endif //__DBGMSG_H__
