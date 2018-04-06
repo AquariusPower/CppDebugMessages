@@ -93,6 +93,8 @@
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
     #endif
 
+    #include "dbgmsg_project.h"
+
   #endif //DBGMSG
 
 #endif //__DBGMSG_H__

@@ -30,6 +30,7 @@
 
 // this is also easy helper copy/paste to cpp files
 #ifdef DBGMSG
+  #define DBGMSG_OBJ //do NOT define this in your project!
   #include "dbgmsg.h"
 #else
   #include "rmdbgmsg.h"
