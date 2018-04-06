@@ -28,13 +28,8 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// this is also easy helper copy/paste to cpp files
-#ifdef DBGMSG
-  #define DBGMSG_OBJ //do NOT define this in your project!
-  #include "dbgmsg.h"
-#else
-  #include "rmdbgmsg.h"
-#endif
+#define DBGMSG_OBJ //do not use this define line in your project cpp files, it is meant only for dbgmsg.cpp!!!
+#include "dbgmsgproj.h"
 
 #ifdef DBGMSG
 

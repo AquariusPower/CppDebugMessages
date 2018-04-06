@@ -75,7 +75,7 @@
 
     /* easy/non-cumbersome debug messages */
     // base stream SS
-    #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<s; dbgmsg::addDbgMsgLogTmp(); }
+    #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<__FUNCTION__<<":"<<s; dbgmsg::addDbgMsgLogTmp(); }
     //TODO #define DBGN(chk) "("<<(chk==NULL?"NULL":chk)<<")"
     // below wasnt intended to look cool, but... it does IMHO :)
     #define DBG1(a) DBGSS("("<<a<<")")
@@ -92,8 +92,6 @@
     #ifdef UNIX
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
     #endif
-
-    #include "dbgmsg_project.h"
 
   #endif //DBGMSG
 
