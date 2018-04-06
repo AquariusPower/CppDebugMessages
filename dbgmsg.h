@@ -77,7 +77,7 @@
     // base stream SS
     #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<s; dbgmsg::addDbgMsgLogTmp(); }
     //TODO #define DBGN(chk) "("<<(chk==NULL?"NULL":chk)<<")"
-    // below wasnt intended to look cool, but... it does :)
+    // below wasnt intended to look cool, but... it does IMHO :)
     #define DBG1(a) DBGSS("("<<a<<")")
     #define DBG2(a,b) DBGSS("("<<a<<")("<<b<<")")
     #define DBG3(a,b,c) DBGSS("("<<a<<")("<<b<<")("<<c<<")")
@@ -88,7 +88,7 @@
     #define DBG8(a,b,c,d,e,f,g,h) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")")
     #define DBG9(a,b,c,d,e,f,g,h,i) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")("<<i<<")")
     #define DBGLN DBGSS("(ReachedHere)")
-    #define DBGOK DBG2("Ok?",(bOk?"true":"false")) //usage: try to disable it, one check per line, when there are too many conditions to check
+    #define DBGB(b) DBG1((b?"true":"false"))
     #ifdef UNIX
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
     #endif

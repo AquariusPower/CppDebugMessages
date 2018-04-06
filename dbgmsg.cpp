@@ -114,7 +114,7 @@ void dbgmsg::SigHndlr(int iSig)
   std::cout<<cSigName<<std::endl; //show it if possible
 
   //store on log file
-  getCurrentStackTraceSS(true,true); //TODO this output to log file is not working
+  getCurrentStackTraceSS(true,true);
 
   exit(iSig); //1 or something else to just identify it was handled?
 }
