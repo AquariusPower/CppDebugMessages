@@ -39,6 +39,7 @@
 #include <unistd.h> //std::getpid()
 
 std::stringstream dbgmsg::ssDbgMsgTmp;
+std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::ofstream dbgmsg::fldDbgMsg;
 std::stringstream dbgmsg::ssDbgMsgFileName;
 std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
@@ -96,6 +97,40 @@ std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
   if(bLog)addDbgMsgLog(ss);
 
   return ss;
+}
+
+std::string dbgmsg::id(const char* cId){
+  ssDbgMsgPartTmp.str(std::string()); //actually clear/empty it = ""
+  if(cId!=NULL)ssDbgMsgPartTmp<<cId<<"=";
+  return ssDbgMsgPartTmp.str();
+}
+
+std::string dbgmsg::b(bool b,const char* cId){
+  ssDbgMsgPartTmp.str(std::string()); //actually clear/empty it = ""
+  if(cId!=NULL)ssDbgMsgPartTmp<<cId<<"=";
+  ssDbgMsgPartTmp<<(b?"true":"false");
+  return ssDbgMsgPartTmp.str();
+}
+
+std::string dbgmsg::i(long l,const char* cId){
+  ssDbgMsgPartTmp.str(std::string()); //actually clear/empty it = ""
+  if(cId!=NULL)ssDbgMsgPartTmp<<cId<<"=";
+  ssDbgMsgPartTmp<<l;
+  return ssDbgMsgPartTmp.str();
+}
+
+std::string dbgmsg::f(double d,const char* cId){
+  ssDbgMsgPartTmp.str(std::string()); //actually clear/empty it = ""
+  if(cId!=NULL)ssDbgMsgPartTmp<<cId<<"=";
+  ssDbgMsgPartTmp<<d;
+  return ssDbgMsgPartTmp.str();
+}
+
+std::string dbgmsg::str(const char* c,const char* cId){
+  ssDbgMsgPartTmp.str(std::string()); //actually clear/empty it = ""
+  if(cId!=NULL)ssDbgMsgPartTmp<<cId<<"=";
+  ssDbgMsgPartTmp<<"'"<<c<<"'";
+  return ssDbgMsgPartTmp.str();
 }
 
 void dbgmsg::SigHndlr(int iSig)

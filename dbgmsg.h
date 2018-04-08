@@ -49,6 +49,13 @@
     class dbgmsg{
       public:
         static std::stringstream ssDbgMsgTmp;
+
+//        static const char* b(bool b){return b?"true":"false";}
+        static std::string id(const char* cId);
+        static std::string b(bool b,const char* cId=NULL);
+        static std::string i(long l,const char* cId=NULL);
+        static std::string f(double d,const char* cId=NULL);
+        static std::string str(const char* c,const char* cId=NULL);
         static void addDbgMsgLogTmp();
         static void addDbgMsgLog(std::stringstream& ss);
         static void SetDebugLogPath(const char* c);
@@ -71,6 +78,7 @@
         static std::stringstream ssDbgMsgFileName;
         static std::stringstream* pssDbgMsgPath;
         static bool bPidAllowed;
+        static std::stringstream ssDbgMsgPartTmp;
     };
 
     /* easy/non-cumbersome debug messages */
@@ -88,7 +96,23 @@
     #define DBG8(a,b,c,d,e,f,g,h) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")")
     #define DBG9(a,b,c,d,e,f,g,h,i) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")("<<i<<")")
     #define DBGLN DBGSS("(ReachedHere)")
-    #define DBGB(b) DBG1((b?"true":"false"))
+
+    // double expansion pre-processor variable identifier trick
+    #define DBGTOSTR_(str)  #str
+    #define DBGTOSTR(str)  DBGTOSTR_(str)
+
+    #define DBGB(B) (dbgmsg::b(B,DBGTOSTR(B)))
+    #define DBGSB(B) DBG1(DBGB(B))
+
+    #define DBGI(I) (dbgmsg::i(I,DBGTOSTR(I)))
+    #define DBGSI(I) DBG1(DBGI(I))
+
+    #define DBGF(F) (dbgmsg::f(F,DBGTOSTR(F)))
+    #define DBGSF(F) DBG1(DBGF(F))
+
+    #define DBGC(C) (dbgmsg::str(C,DBGTOSTR(C)))
+    #define DBGSC(C) DBG1(DBGC(C))
+
     #ifdef UNIX
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
     #endif
