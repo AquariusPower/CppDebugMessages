@@ -99,7 +99,7 @@ std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
   return ss;
 }
 
-std::string dbgmsg::id(const char* cId){
+std::string dbgmsg::id(const char* cId){ //TODO not working... is duplicating the id...
   ssDbgMsgPartTmp.str(std::string()); //actually clear/empty it = ""
   if(cId!=NULL)ssDbgMsgPartTmp<<cId<<"=";
   return ssDbgMsgPartTmp.str();

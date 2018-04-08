@@ -51,7 +51,6 @@
         static std::stringstream ssDbgMsgTmp;
 
 //        static const char* b(bool b){return b?"true":"false";}
-        static std::string id(const char* cId);
         static std::string b(bool b,const char* cId=NULL);
         static std::string i(long l,const char* cId=NULL);
         static std::string f(double d,const char* cId=NULL);
@@ -68,11 +67,14 @@
           static std::stringstream getCurrentStackTraceSS(bool bShowNow, bool bLog );
         #endif
       private:
-        static void init();
         #ifdef UNIX
           static void initSignals();
         #endif
+
+        static void init();
         static void initStream();
+        static std::string id(const char* cId);
+
         static unsigned long long llDbgmsgId;
         static std::ofstream fldDbgMsg;
         static std::stringstream ssDbgMsgFileName;
