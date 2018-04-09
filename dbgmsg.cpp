@@ -28,10 +28,10 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifdef DBGMSG
+
 #define DBGMSG_OBJ //do not use this define line in your project cpp files, it is meant only for dbgmsg.cpp!!!
 #include "dbgmsgproj.h"
-
-#ifdef DBGMSG
 
 //#include <stdlib.h> //getenv
 //#include <errno.h> //program_invocation_short_name
@@ -192,7 +192,7 @@ void dbgmsg::initStream(){
   if(!ssDbgMsgPath().str().empty()){
     ssDbgMsgFileName<<ssDbgMsgPath().str()<<"/";
   }else{
-    ssDbgMsgFileName<<"./";
+    ssDbgMsgFileName<<"./"; //will be relative to current execution path
   }
 
   // filename
