@@ -226,7 +226,7 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
     fldDbgMsg.open(ssDbgMsgFileName.str());
   }
 
-  fldDbgMsg<<" "<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
+  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
   fldDbgMsg.flush();
 }
 

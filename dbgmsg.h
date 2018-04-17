@@ -106,13 +106,13 @@
     #define DBGB(B) (dbgmsg::b(B,DBGTOSTR(B)))
     #define DBGSB(B) DBG1(DBGB(B))
 
-    #define DBGI(I) (dbgmsg::i(I,DBGTOSTR(I)))
+    #define DBGI(I) (dbgmsg::i(I,DBGTOSTR(I))) //integer numbers
     #define DBGSI(I) DBG1(DBGI(I))
 
-    #define DBGF(F) (dbgmsg::f(F,DBGTOSTR(F)))
+    #define DBGF(F) (dbgmsg::f(F,DBGTOSTR(F))) //floating numbers
     #define DBGSF(F) DBG1(DBGF(F))
 
-    #define DBGC(C) (dbgmsg::str(C,DBGTOSTR(C)))
+    #define DBGC(C) (dbgmsg::str(C,DBGTOSTR(C))) //char*
     #define DBGSC(C) DBG1(DBGC(C))
 
     #ifdef UNIX
