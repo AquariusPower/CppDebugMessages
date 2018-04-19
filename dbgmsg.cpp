@@ -52,13 +52,18 @@ std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not ini
 }
 
 void dbgmsg::SetDebugLogPath(const char* c){
-  if(c!=NULL){
+  if(!ssDbgMsgPath().str().empty()){
+    std::cout<<"DBGMSG: path already set to '"<<ssDbgMsgPath().str()<<"', asked now '"<<c<<"'"<<std::endl;
+    return;
+  }
+
+  if(c!=NULL){ //TODO validate path b4 setting it
     ssDbgMsgPath().str(std::string()); //actually clear/empty it = ""
+    ssDbgMsgPath().clear(); //good?
     ssDbgMsgPath()<<c;
     std::cout.flush();std::cout.clear(); //fit it if needed
     std::cout<<"DBGMSG: set path: "<<ssDbgMsgPath().str()<<std::endl;
   }
-  //TODO validate path ?
 }
 
 int iBufSize=256; //TODO 1024? whatsa good value?
@@ -136,6 +141,8 @@ std::string dbgmsg::str(const char* c,const char* cId){
 void dbgmsg::SigHndlr(int iSig)
 {
   char* cSigName=strsignal(iSig);
+
+  //1st! make it promptly visible!
   std::cerr.flush();std::cerr.clear(); //try to make it sure STDERR will work!
   std::cerr<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'"<<std::endl; //show it if possible
 
@@ -146,6 +153,12 @@ void dbgmsg::SigHndlr(int iSig)
 
   //store on log file
   getCurrentStackTraceSS(true,true);
+
+  std::stringstream ss;ss<<"(hit a key to exit)";addDbgMsgLog(ss);
+
+  fldDbgMsg.close(); //this does NOT prevents trunc...
+
+  std::scanf(ss.str().c_str()); //this helps on reading/copying the dbg file before the trunc!
 
   exit(iSig); //1 or something else to just identify it was handled?
 }
@@ -228,6 +241,8 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
 
   fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
   fldDbgMsg.flush();
+
+//  fldDbgMsg.close(); //TODO prevents trunc on segfault? no...
 }
 
 void dbgmsg::addDbgMsgLogTmp(){
