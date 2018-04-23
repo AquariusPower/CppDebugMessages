@@ -115,6 +115,10 @@
     #define DBGC(C) (dbgmsg::str(C,DBGTOSTR(C))) //char*
     #define DBGSC(C) DBG1(DBGC(C))
 
+    #define DBGS(SS) (dbgmsg::str(SS.str().c_str(),DBGTOSTR(SS))) //stringstream
+
+    #define DBGEXEC(cmds) {cmds;}
+
     #ifdef UNIX
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
     #endif

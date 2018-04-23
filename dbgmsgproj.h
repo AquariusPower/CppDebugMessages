@@ -46,6 +46,8 @@
   #define DBGSF(F)
   #define DBGC(C)
   #define DBGSC(C)
+  #define DBGS(SS)
+  #define DBGEXEC(cmds)
 
   // project specific erasers:
   //TODO you do it
