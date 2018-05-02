@@ -158,7 +158,11 @@ void dbgmsg::SigHndlr(int iSig)
 
   fldDbgMsg.close(); //this does NOT prevents trunc...
 
-  std::scanf(ss.str().c_str()); //this helps on reading/copying the dbg file before the trunc!
+  std::cout<<ss.str()<<std::endl; //granting it will be readable
+  std::cout<<ss.str()<<std::endl; //granting it will be readable
+  std::cerr<<ss.str()<<std::endl; //granting it will be readable
+  std::cerr<<ss.str()<<std::endl; //granting it will be readable
+  std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the trunc!
 
   exit(iSig); //1 or something else to just identify it was handled?
 }
