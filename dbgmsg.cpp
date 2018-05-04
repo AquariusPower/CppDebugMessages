@@ -78,9 +78,9 @@ char** dbgmsg::getCurrentStackTrace(bool bShowNow,int& riTot){
     //for safety/failProof try, just directly show the details on term
     //TODO try/catch?
     std::cerr.flush();std::cerr.clear(); //fit it if needed
-    std::cerr<<"DBGMSG:CurrentStackTrace:Begin"<<std::endl;
+    std::cerr<<"DBGMSG:CurrentStackTrace:Begin >>--->"<<std::endl;
     backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);
-    std::cerr<<"DBGMSG:CurrentStackTrace:End"<<std::endl;
+    std::cerr<<"DBGMSG:CurrentStackTrace:End   <---<<"<<std::endl;
   }
 
   return backtrace_symbols(paStkBuff,riTot);;

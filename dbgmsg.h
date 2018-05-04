@@ -83,20 +83,22 @@
         static std::stringstream ssDbgMsgPartTmp;
     };
 
+    #define DBGCTSV(ex) "{"<<DBGTOSTR(ex)<<"}=\""<<ex<<"\";" //DBG "code to string" and value
+    #define DBGSCTSV(ex) DBGSS(DBGSCTSV(ex))
+
     /* easy/non-cumbersome debug messages */
     // base stream SS
     #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<__FUNCTION__<<":"<<s; dbgmsg::addDbgMsgLogTmp(); }
     //TODO #define DBGN(chk) "("<<(chk==NULL?"NULL":chk)<<")"
-    // below wasnt intended to look cool, but... it does IMHO :)
-    #define DBG1(a) DBGSS("("<<a<<")")
-    #define DBG2(a,b) DBGSS("("<<a<<")("<<b<<")")
-    #define DBG3(a,b,c) DBGSS("("<<a<<")("<<b<<")("<<c<<")")
-    #define DBG4(a,b,c,d) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")")
-    #define DBG5(a,b,c,d,e) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")")
-    #define DBG6(a,b,c,d,e,f) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")")
-    #define DBG7(a,b,c,d,e,f,g) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")")
-    #define DBG8(a,b,c,d,e,f,g,h) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")")
-    #define DBG9(a,b,c,d,e,f,g,h,i) DBGSS("("<<a<<")("<<b<<")("<<c<<")("<<d<<")("<<e<<")("<<f<<")("<<g<<")("<<h<<")("<<i<<")")
+    #define DBG1(a) DBGSS(DBGCTSV(a))
+    #define DBG2(a,b) DBGSS(DBGCTSV(a)<<DBGCTSV(b))
+    #define DBG3(a,b,c) DBGSS(DBGCTSV(a)<<DBGCTSV(b)<<DBGCTSV(c))
+    #define DBG4(a,b,c,d) DBGSS(DBGCTSV(a)<<DBGCTSV(b)<<DBGCTSV(c)<<DBGCTSV(d))
+    #define DBG5(a,b,c,d,e) DBGSS(DBGCTSV(a)<<DBGCTSV(b)<<DBGCTSV(c)<<DBGCTSV(d)<<DBGCTSV(e))
+    #define DBG6(a,b,c,d,e,f) DBGSS(DBGCTSV(a)<<DBGCTSV(b)<<DBGCTSV(c)<<DBGCTSV(d)<<DBGCTSV(e)<<DBGCTSV(f))
+    #define DBG7(a,b,c,d,e,f,g) DBGSS(DBGCTSV(a)<<DBGCTSV(b)<<DBGCTSV(c)<<DBGCTSV(d)<<DBGCTSV(e)<<DBGCTSV(f)<<DBGCTSV(g))
+    #define DBG8(a,b,c,d,e,f,g,h) DBGSS(DBGCTSV(a)<<DBGCTSV(b)<<DBGCTSV(c)<<DBGCTSV(d)<<DBGCTSV(e)<<DBGCTSV(f)<<DBGCTSV(g)<<DBGCTSV(h))
+    #define DBG9(a,b,c,d,e,f,g,h,i) DBGSS(DBGCTSV(a)<<DBGCTSV(b)<<DBGCTSV(c)<<DBGCTSV(d)<<DBGCTSV(e)<<DBGCTSV(f)<<DBGCTSV(g)<<DBGCTSV(h)<<DBGCTSV(i))
     #define DBGLN DBGSS("(ReachedHere)")
 
     // double expansion pre-processor variable identifier trick
@@ -104,20 +106,21 @@
     #define DBGTOSTR(str)  DBGTOSTR_(str)
 
     #define DBGB(B) (dbgmsg::b(B,DBGTOSTR(B)))
-    #define DBGSB(B) DBG1(DBGB(B))
+    #define DBGSB(B) DBG1(B)
 
     #define DBGI(I) (dbgmsg::i(I,DBGTOSTR(I))) //integer numbers
-    #define DBGSI(I) DBG1(DBGI(I))
+    #define DBGSI(I) DBG1(I)
 
     #define DBGF(F) (dbgmsg::f(F,DBGTOSTR(F))) //floating numbers
-    #define DBGSF(F) DBG1(DBGF(F))
+    #define DBGSF(F) DBG1(F)
 
     #define DBGC(C) (dbgmsg::str(C,DBGTOSTR(C))) //char*
-    #define DBGSC(C) DBG1(DBGC(C))
+    #define DBGSC(C) DBG1(C)
 
     #define DBGS(SS) (dbgmsg::str(SS.str().c_str(),DBGTOSTR(SS))) //stringstream
 
-    #define DBGEXEC(cmds) {cmds;}
+    //too messy... #define DBGEXEC(cmds) {DBGSS(DBGTOSTR(cmds));cmds;}
+    #define DBGEXEC(cmds) {cmds;} //this helps a lot by avoiding #ifdef for DBGMSG
 
     #ifdef UNIX
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
