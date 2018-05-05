@@ -42,9 +42,13 @@ std::stringstream dbgmsg::ssDbgMsgTmp;
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::ofstream dbgmsg::fldDbgMsg;
 std::stringstream dbgmsg::ssDbgMsgFileName;
+std::stringstream dbgmsg::ssDbgMsgFileNameCrash;
 std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
+std::vector<std::string> dbgmsg::vLastDbgMsgs;
 bool dbgmsg::bPidAllowed=false;
+int dbgmsg::iPid=0;
 unsigned long long dbgmsg::llDbgmsgId=0;
+int iMaxCrashLinesInMemory = 1000;
 
 std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault...
   if(pssDbgMsgPath==NULL)pssDbgMsgPath=new std::stringstream();
@@ -154,15 +158,24 @@ void dbgmsg::SigHndlr(int iSig)
   //store on log file
   getCurrentStackTraceSS(true,true);
 
-  std::stringstream ss;ss<<"(hit a key to exit)";addDbgMsgLog(ss);
+  std::stringstream ss;ss<<"(hit ENTER to exit)";addDbgMsgLog(ss);
 
   fldDbgMsg.close(); //this does NOT prevents trunc...
 
-  std::cout<<ss.str()<<std::endl; //granting it will be readable
+  std::ofstream fldDbgMsgCrash;
+  fldDbgMsgCrash.open(ssDbgMsgFileNameCrash.str());
+  long long llDbgmsgIdCrash = llDbgmsgId - iMaxCrashLinesInMemory;
+  if(llDbgmsgIdCrash<0)llDbgmsgIdCrash=0;
+  for(int i=0;i<vLastDbgMsgs.size();i++){
+    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
+    fldDbgMsgCrash.flush();
+  }
+  std::cout<<"CrashSaved:"<<ssDbgMsgFileNameCrash.str()<<std::endl;
+  std::cerr<<"CrashSaved:"<<ssDbgMsgFileNameCrash.str()<<std::endl;
+
   std::cout<<ss.str()<<std::endl; //granting it will be readable
   std::cerr<<ss.str()<<std::endl; //granting it will be readable
-  std::cerr<<ss.str()<<std::endl; //granting it will be readable
-  std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the trunc!
+  std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
 
   exit(iSig); //1 or something else to just identify it was handled?
 }
@@ -221,9 +234,14 @@ void dbgmsg::initStream(){
 #endif
 
   //TODO add date/time on filename
-  if(bPidAllowed)ssDbgMsgFileName<<".pid"<<::getpid();
+  iPid=::getpid();
+  if(bPidAllowed)ssDbgMsgFileName<<".pid"<<iPid;
 
-  ssDbgMsgFileName<<".dbgmsg.log"; //suffix
+  ssDbgMsgFileNameCrash<<ssDbgMsgFileName.str()<<".Crash";
+  if(!bPidAllowed)ssDbgMsgFileNameCrash<<".pid"<<iPid; //this will only be generated if it crashes
+
+  ssDbgMsgFileNameCrash<<".dbgmsg.log"; //suffix
+  ssDbgMsgFileName     <<".dbgmsg.log"; //suffix
 
   std::cerr.flush();std::cerr.clear();//fix if needed
   std::cerr<<"dbgmsgLogE:"<<ssDbgMsgFileName.str()<<std::endl; //sometimes cerr wont show anything (broken by NULL?)
@@ -242,6 +260,9 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
   if(!fldDbgMsg.is_open()){
     fldDbgMsg.open(ssDbgMsgFileName.str());
   }
+
+  vLastDbgMsgs.push_back(ss.str());
+  while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory)vLastDbgMsgs.erase(vLastDbgMsgs.begin());
 
   fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
   fldDbgMsg.flush();

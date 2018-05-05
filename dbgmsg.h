@@ -38,6 +38,7 @@
     #include <iostream>
     #include <fstream>
     #include <sstream>
+    #include <vector>
 
     #ifdef UNIX
     #include <execinfo.h>
@@ -78,12 +79,15 @@
         static unsigned long long llDbgmsgId;
         static std::ofstream fldDbgMsg;
         static std::stringstream ssDbgMsgFileName;
+        static std::stringstream ssDbgMsgFileNameCrash;
         static std::stringstream* pssDbgMsgPath;
         static bool bPidAllowed;
         static std::stringstream ssDbgMsgPartTmp;
+        static int iPid;
+        static std::vector<std::string> vLastDbgMsgs;
     };
 
-    #define DBGCTSV(ex) "{"<<DBGTOSTR(ex)<<"}=\""<<ex<<"\";" //DBG "code to string" and value
+    #define DBGCTSV(ex) "{"<<DBGTOSTR(ex)<<"}=\""<<(ex)<<"\";" //DBG "code to string" and value
     #define DBGSCTSV(ex) DBGSS(DBGSCTSV(ex))
 
     /* easy/non-cumbersome debug messages */
