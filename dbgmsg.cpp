@@ -167,11 +167,12 @@ void dbgmsg::SigHndlr(int iSig)
   long long llDbgmsgIdCrash = llDbgmsgId - iMaxCrashLinesInMemory;
   if(llDbgmsgIdCrash<0)llDbgmsgIdCrash=0;
   for(int i=0;i<vLastDbgMsgs.size();i++){
-    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
+//    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
+    fldDbgMsgCrash<<" "<<vLastDbgMsgs[i]<<std::endl;
     fldDbgMsgCrash.flush();
   }
-  std::cout<<"CrashSaved:"<<ssDbgMsgFileNameCrash.str()<<std::endl;
-  std::cerr<<"CrashSaved:"<<ssDbgMsgFileNameCrash.str()<<std::endl;
+  std::cout<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
+  std::cerr<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
 
   std::cout<<ss.str()<<std::endl; //granting it will be readable
   std::cerr<<ss.str()<<std::endl; //granting it will be readable
@@ -264,7 +265,8 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
   vLastDbgMsgs.push_back(ss.str());
   while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory)vLastDbgMsgs.erase(vLastDbgMsgs.begin());
 
-  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
+//  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
+  fldDbgMsg<<" "<<ss.str()<<std::endl;
   fldDbgMsg.flush();
 
 //  fldDbgMsg.close(); //TODO prevents trunc on segfault? no...
