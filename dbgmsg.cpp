@@ -42,6 +42,7 @@ std::stringstream dbgmsg::ssDbgMsgTmp;
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::ofstream dbgmsg::fldDbgMsg;
 std::stringstream dbgmsg::ssDbgMsgFileName;
+bool dbgmsg::bWaitOnCrash=false;
 std::stringstream dbgmsg::ssDbgMsgFileNameCrash;
 std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
 std::vector<std::string> dbgmsg::vLastDbgMsgs;
@@ -150,7 +151,6 @@ void dbgmsg::SigHndlr(int iSig)
   std::stringstream ssSig;ssSig<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'";
   std::cerr.flush();std::cerr.clear(); //try to make it sure STDERR will work!
   std::cerr<<ssSig.str()<<std::endl; //show it if possible
-  addDbgMsgLog(ssSig);
 
   // send to stdout too
   std::cout.flush();std::cout.clear(); //try to make it sure STDOUT will work!
@@ -159,8 +159,10 @@ void dbgmsg::SigHndlr(int iSig)
   //store on log file
   getCurrentStackTraceSS(true,true);
 
-  std::stringstream ss;ss<<"(hit ENTER to exit)";addDbgMsgLog(ss);
+  std::stringstream ss;ss<<"(hit ENTER to exit)";
 
+  if(bWaitOnCrash)addDbgMsgLog(ss);
+  addDbgMsgLog(ssSig);
   fldDbgMsg.close(); //this does NOT prevents trunc...
 
   std::ofstream fldDbgMsgCrash;
@@ -171,13 +173,16 @@ void dbgmsg::SigHndlr(int iSig)
 //    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
     fldDbgMsgCrash<<" "<<vLastDbgMsgs[i]<<std::endl;
     fldDbgMsgCrash.flush();
+    fldDbgMsgCrash.close();
   }
   std::cout<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
   std::cerr<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
 
-  std::cout<<ss.str()<<std::endl; //granting it will be readable
-  std::cerr<<ss.str()<<std::endl; //granting it will be readable
-  std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
+  if(bWaitOnCrash){
+    std::cout<<ss.str()<<std::endl; //granting it will be readable
+    std::cerr<<ss.str()<<std::endl; //granting it will be readable
+    std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
+  }
 
   exit(iSig); //1 or something else to just identify it was handled?
 }

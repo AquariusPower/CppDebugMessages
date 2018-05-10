@@ -61,6 +61,7 @@
         static void SetDebugLogPath(const char* c);
         static void SetAllowPidOnLogName(){bPidAllowed=true;}
         static std::stringstream& ssDbgMsgPath();
+        static void SetWaitOnCrash(bool b){bWaitOnCrash=b;}
         ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
         #ifdef UNIX
           static void SigHndlr(int iSig);
@@ -80,6 +81,7 @@
         static std::ofstream fldDbgMsg;
         static std::stringstream ssDbgMsgFileName;
         static std::stringstream ssDbgMsgFileNameCrash;
+        static bool bWaitOnCrash;
         static std::stringstream* pssDbgMsgPath;
         static bool bPidAllowed;
         static std::stringstream ssDbgMsgPartTmp;
