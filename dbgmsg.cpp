@@ -147,13 +147,14 @@ void dbgmsg::SigHndlr(int iSig)
   char* cSigName=strsignal(iSig);
 
   //1st! make it promptly visible!
+  std::stringstream ssSig;ssSig<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'";
   std::cerr.flush();std::cerr.clear(); //try to make it sure STDERR will work!
-  std::cerr<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'"<<std::endl; //show it if possible
+  std::cerr<<ssSig.str()<<std::endl; //show it if possible
+  addDbgMsgLog(ssSig);
 
   // send to stdout too
-  std::cout.flush();
-  std::cout.clear(); //try to make it sure STDOUT will work!
-  std::cout<<cSigName<<std::endl; //show it if possible
+  std::cout.flush();std::cout.clear(); //try to make it sure STDOUT will work!
+  std::cout<<ssSig.str()<<std::endl; //show it if possible
 
   //store on log file
   getCurrentStackTraceSS(true,true);
