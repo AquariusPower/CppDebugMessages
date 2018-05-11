@@ -33,13 +33,21 @@
 #define DBGMSG_OBJ //do not use this define line in your project cpp files, it is meant only for dbgmsg.cpp!!!
 #include "dbgmsgproj.h"
 
-//#include <stdlib.h> //getenv
-//#include <errno.h> //program_invocation_short_name
+/**
+ * SELF NOTE: KEEP THESE 4 commented lines below FOR NOW...
+ * this merge indicator trick is here just to prevent compilation before commenting these lines and still let eclipse work! :)
+ * TODO find why eclipse needs this to let autocompletion work here :(
+ */
+//<<<<< dummy1
+//#include "dbgmsg.h"
+//>>>>> dummy2
+//int iDummy=0; //this line is to prevent the merge detection from going further below breaking autocompletion etc...
+
 #include <string.h> //strlen
 #include <unistd.h> //std::getpid()
 
-std::stringstream dbgmsg::ssDbgMsgTmp;
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
+std::stringstream dbgmsg::ssDbgMsgTmp;
 std::ofstream dbgmsg::fldDbgMsg;
 std::stringstream dbgmsg::ssDbgMsgFileName;
 bool dbgmsg::bWaitOnCrash=false;
@@ -50,6 +58,7 @@ bool dbgmsg::bPidAllowed=false;
 int dbgmsg::iPid=0;
 unsigned long long dbgmsg::llDbgmsgId=0;
 int iMaxCrashLinesInMemory = 1000;
+int dbgmsg::iMaxLinesInDebugFile = 100000;
 
 std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault...
   if(pssDbgMsgPath==NULL)pssDbgMsgPath=new std::stringstream();
@@ -273,7 +282,27 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
 
 //  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
   fldDbgMsg<<" "<<ss.str()<<std::endl;
-  fldDbgMsg.flush();
+  fldDbgMsg.flush(); //TODO unnecessary?
+
+  if(iMaxLinesInDebugFile>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){ //TODO is it helping preventing high IO ?
+    std::stringstream ssOldFileName;
+    ssOldFileName<<ssDbgMsgFileName.str()<<".old";
+
+//    std::stringstream ssTmp;
+//    ssTmp<<" [removing old debug file "<<ssOldFileName.str()<<"]";
+//    std::cerr<<ssTmp.str()<<std::endl;
+//    fldDbgMsg<<ssTmp.str()<<std::endl;
+    std::remove(ssOldFileName.str().c_str()); //clean older b4 renaming
+
+//    ssTmp<<" [renaming this debug file to "<<ssOldFileName.str()<<"]";
+//    std::cerr<<ssTmp.str()<<std::endl;
+//    fldDbgMsg<<ssTmp.str()<<std::endl;
+    fldDbgMsg.close();
+
+    std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());
+  }
+
+  llDbgmsgId++;
 
 //  fldDbgMsg.close(); //TODO prevents trunc on segfault? no...
 }

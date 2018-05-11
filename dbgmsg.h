@@ -62,6 +62,7 @@
         static void SetAllowPidOnLogName(){bPidAllowed=true;}
         static std::stringstream& ssDbgMsgPath();
         static void SetWaitOnCrash(bool b){bWaitOnCrash=b;}
+        static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
         ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
         #ifdef UNIX
           static void SigHndlr(int iSig);
@@ -86,6 +87,7 @@
         static bool bPidAllowed;
         static std::stringstream ssDbgMsgPartTmp;
         static int iPid;
+        static int iMaxLinesInDebugFile;
         static std::vector<std::string> vLastDbgMsgs;
     };
 
