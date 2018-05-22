@@ -1,0 +1,25 @@
+[guitool "SBKP Compare .sbkp with its counterpart"]
+  cmd = git SBKPdiff \"$FILENAME\"
+	noconsole = yes
+	needsfile = yes
+  
+[guitool "SBKP:1 Create simple backup copy .sbkp b4 reverting changes"]
+	cmd = cp -vf \"$FILENAME\" \"$FILENAME.sbkp\"
+	noconsole = yes
+	needsfile = yes
+  
+[guitool "SBKP:2 Create Patch for .sbkp vs its counterpart"]
+  cmd = git SBKPcreatePatch \"$FILENAME\"
+	noconsole = yes
+	needsfile = yes
+  
+[guitool "SBKP:3 Apply Patch"]
+  cmd = git SBKPapplyPatch \"$FILENAME\"
+	noconsole = yes
+	needsfile = yes
+
+[alias]
+  SBKPdiff =        "!f() { strFile="$1"; meld "${strFile%.sbkp}" "${strFile}"; }; f"
+  SBKPcreatePatch = "!f() { strFile="$1"; diff -Naru "./${strFile%.sbkp}" "./${strFile}" >"./${strFile%.sbkp}.patch"; }; f"
+  SBKPapplyPatch =  "!f() { strFile="$1"; patch -p1 <"./${strFile%.sbkp}.patch"; }; f"
+
