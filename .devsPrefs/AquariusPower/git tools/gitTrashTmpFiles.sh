@@ -1,9 +1,8 @@
 #!/bin/bash
 
-pwd;if [[ ! -f ./.git/config ]];then echoc -p "not at valid VCS path";exit 1;fi
+strHelp="trash VCS discarded/unused/useless/old/deprecated files git"
+source "`which gitToolsCommonCode.sh`"
 
-echo "trash VCS discarded/unused/useless/old/deprecated files git"
-
-find ./ \
+FUNCexecEcho find ./ \
   '(' -iname "*.rej" -o -iname "*.orig" -o -iname "*.sbkp" -o -iname "*.patch" ')' \
   -exec trash -v '{}' \;

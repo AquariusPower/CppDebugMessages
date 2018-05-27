@@ -1,8 +1,7 @@
 #!/bin/bash
 
-pwd;if [[ ! -f ./.git/config ]];then echoc -p "not at valid VCS path";exit 1;fi
-
-echo "create patches for all sbkp files"
+strHelp="create patches for all sbkp files"
+source "`which gitToolsCommonCode.sh`"
 
 function FUNCSBKPcreatePatch() { 
   strFile="$1"; 

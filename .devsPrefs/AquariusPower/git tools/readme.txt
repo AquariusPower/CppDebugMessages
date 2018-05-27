@@ -1,4 +1,6 @@
-at git gui:
+# add gitConfigMultiBranchTools.txt contents to your .gitconfig file
+
+# at git gui:
 
 1st - at tools menu select the 1st option to create the .sbkp file (it is a simple copy, you should now backup everything, I use Unison)
 
@@ -10,8 +12,13 @@ at git gui:
 
 3 - apply the "relative patch" and resolve minor conflicts using git gui tools menu sbkp option 3.
 
-Obs: there are some command line tools .sh scripts to let it work on many files at the same time, as thru git gui we can only work in one file per time.
+# Obs: there are some command line tools .sh scripts to let it work on many files at the same time, as thru git gui we can only work in one file per time.
 
-after using it you can prepare the work for many branches in a single merged branch, and split all the new "relative code" to other branches.
+# after using it you can prepare the work for many branches in a single merged branch, and split all the new "relative code" to other branches.
 
-Obs.: it is all for **linux** (and probably Mac OSX too I guess), and the shell script compatibility is `bash`. But I think they are not complicated to be ported to windows as probably only a few commands will change if at all.
+# Obs.: it is all for **linux** (and probably Mac OSX too I guess), and the shell script compatibility is `bash`. But I think they are not complicated to be ported to windows as probably only a few commands will change if at all.
+
+#######################################
+
+The scripts .sh are to process multiple files at once.
+Link them to some executable path like $HOME/bin or add current folder to $PATH.

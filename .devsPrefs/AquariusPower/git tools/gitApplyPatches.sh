@@ -1,6 +1,7 @@
 #!/bin/bash
 
-pwd;if [[ ! -f ./.git/config ]];then echoc -p "not at valid VCS path";exit 1;fi
+strHelp="create a new branch using another user's branch of that project"
+source "`which gitToolsCommonCode.sh`"
 
 function FUNCSBKPapplyPatch() { 
   strFile="$1"; 

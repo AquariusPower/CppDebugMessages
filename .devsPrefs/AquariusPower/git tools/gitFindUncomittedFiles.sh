@@ -1,10 +1,6 @@
 #!/bin/bash
 
-echo "HELP:"
-egrep "[#]help" $0
-echo "-------------------"
-
-pwd;if [[ ! -f ./.git/config ]];then echoc -p "not at valid VCS path";exit 1;fi
+source "`which gitToolsCommonCode.sh`"
 
 bSbkp=false
 if [[ "${1-}" == "--sbkp" ]];then #help create .sbkp files
@@ -30,6 +26,8 @@ IFS=$'\n' read -d '' -r -a astrFileList < \
       -and -cnewer "$strRef" \
   )
 declare -p astrFileList
+
+if [[ -z "${astrFileList[@]-}" ]];then echo "Nothing changed...";exit 0;fi
 
 ls -ltr --time-style=full-iso "$strRef" "${astrFileList[@]}"
 
