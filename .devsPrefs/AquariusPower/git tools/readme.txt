@@ -20,5 +20,19 @@
 
 #######################################
 
-The scripts .sh are to process multiple files at once.
-Link them to some executable path like $HOME/bin or add current folder to $PATH.
+# The scripts .sh are to process multiple files at once.
+# Link them to some executable path like $HOME/bin or add current folder to $PATH.
+
+# use like this:
+
+gitFindUncomittedFiles.sh # to confirm it is all ok
+gitFindUncomittedFiles.sh --sbkp # to create the backukps
+
+# now do your safety backup (for ex sync with Unison)
+# and at git gui select all (yes all will work) and revert changes (will only for the changed ones)
+gitCreatePatchesForSBKPs.sh
+
+# change the branch and
+gitApplyPatches.sh # ignore the ones unrelated to current branch
+
+gitTrashTmpFiles.sh # after you applied at all branches run this
