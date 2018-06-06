@@ -284,7 +284,7 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
   fldDbgMsg<<" "<<ss.str()<<std::endl;
   fldDbgMsg.flush(); //TODO unnecessary?
 
-  if(iMaxLinesInDebugFile>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){ //TODO is it helping preventing high IO ?
+  if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){ //TODO is it helping preventing high IO ?
     std::stringstream ssOldFileName;
     ssOldFileName<<ssDbgMsgFileName.str()<<".old";
 
