@@ -62,6 +62,7 @@
         static void SetAllowPidOnLogName(){bPidAllowed=true;}
         static std::stringstream& ssDbgMsgPath();
         static void SetWaitOnCrash(bool b){bWaitOnCrash=b;}
+        static void SetPrependDtTm(bool b){bPrependDtTm=b;}
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
         ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
         #ifdef UNIX
@@ -89,6 +90,7 @@
         static int iPid;
         static int iMaxLinesInDebugFile;
         static std::vector<std::string> vLastDbgMsgs;
+        static bool bPrependDtTm;
     };
 
     #define DBGCTSV(ex) "{"<<DBGTOSTR(ex)<<"}=\""<<(ex)<<"\";" //DBG "code to string" and value

@@ -34,7 +34,7 @@
 #include "dbgmsgproj.h"
 
 /**
- * SELF NOTE: KEEP THESE 4 commented lines below FOR NOW...
+ * SELF NOTE: KEEP THESE 4 "single line commented" lines below FOR NOW...
  * this merge indicator trick is here just to prevent compilation before commenting these lines and still let eclipse work! :)
  * TODO find why eclipse needs this to let autocompletion work here :(
  */
@@ -45,12 +45,24 @@
 
 #include <string.h> //strlen
 #include <unistd.h> //std::getpid()
+#include <ctime>
+
+//#ifdef UNIX //TODO necessary?
+#include <time.h> //strftime
+//#endif
+
+#include <sys/stat.h> //to feed strftime
+#ifdef WIN32
+#define stat _stat
+#endif
+
 
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::stringstream dbgmsg::ssDbgMsgTmp;
 std::ofstream dbgmsg::fldDbgMsg;
 std::stringstream dbgmsg::ssDbgMsgFileName;
 bool dbgmsg::bWaitOnCrash=false;
+bool dbgmsg::bPrependDtTm=true;
 std::stringstream dbgmsg::ssDbgMsgFileNameCrash;
 std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
 std::vector<std::string> dbgmsg::vLastDbgMsgs;
@@ -178,12 +190,14 @@ void dbgmsg::SigHndlr(int iSig)
   fldDbgMsgCrash.open(ssDbgMsgFileNameCrash.str());
   long long llDbgmsgIdCrash = llDbgmsgId - iMaxCrashLinesInMemory;
   if(llDbgmsgIdCrash<0)llDbgmsgIdCrash=0;
-  for(int i=0;i<vLastDbgMsgs.size();i++){
+  int iMaxCrashLines = 100;
+  if(vLastDbgMsgs.size()<iMaxCrashLines)iMaxCrashLines=vLastDbgMsgs.size();
+  for(int i=0;i<iMaxCrashLines;i++){
 //    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
     fldDbgMsgCrash<<" "<<vLastDbgMsgs[i]<<std::endl;
-    fldDbgMsgCrash.flush();
-    fldDbgMsgCrash.close();
+    fldDbgMsgCrash.flush(); //just to be sure
   }
+  fldDbgMsgCrash.close();
   std::cout<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
   std::cerr<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
 
@@ -277,11 +291,25 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
     fldDbgMsg.open(ssDbgMsgFileName.str());
   }
 
-  vLastDbgMsgs.push_back(ss.str());
+  std::stringstream ssDump;
+
+  if(bPrependDtTm){
+    static int iTmSz=100;
+    char cTime[iTmSz];
+    time_t rawtime;
+    time(&rawtime);
+    strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));
+  //  strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&(attr.st_mtime)));
+    ssDump<<cTime<<" ";
+  }
+
+  ssDump<<ss.str();
+
+  vLastDbgMsgs.push_back(ssDump.str());
   while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory)vLastDbgMsgs.erase(vLastDbgMsgs.begin());
 
 //  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
-  fldDbgMsg<<" "<<ss.str()<<std::endl;
+  fldDbgMsg<<" "<<ssDump.str()<<std::endl;
   fldDbgMsg.flush(); //TODO unnecessary?
 
   if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){ //TODO is it helping preventing high IO ?
