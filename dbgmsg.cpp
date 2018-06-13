@@ -59,9 +59,9 @@
 /* tries to make it sure both streams will work always even if they got broken by NULL! */
 #define DBGOE(s) { \
     std::cout.flush();std::cout.clear();   \
-    std::cout<<"cout:"<<s<<std::endl; \
+    std::cout<<"DBGMSG:cout:"<<s<<std::endl; \
     std::cerr.flush();std::cerr.clear();   \
-    std::cerr<<"cerr:"<<s<<std::endl; \
+    std::cerr<<"DBGMSG:cerr:"<<s<<std::endl; \
   };
 
 #define DBGLNSELF {if(!bInitCompleted()){ DBGOE(DBGFLF); }};
@@ -316,8 +316,11 @@ void dbgmsg::initStream(){DBGLNSELF;
 void dbgmsg::addDbgMsgLog(std::stringstream& ss){
   if(bAddingLog){
     // dbgmsg internal error
-    DBGOE("dbgmsgLogO: already adding log!!!");
+    DBGOE("already adding log!!!");
+    DBGOE("id="<<llDbgmsgId);
+    DBGOE("v size = "<<vLastDbgMsgs.size());
     getCurrentStackTraceSS(true,false);
+    DBGOE("exiting now!!!");
     exit(1);
   }
 
