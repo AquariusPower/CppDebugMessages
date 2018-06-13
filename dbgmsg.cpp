@@ -63,6 +63,7 @@ std::ofstream dbgmsg::fldDbgMsg;
 std::stringstream dbgmsg::ssDbgMsgFileName;
 bool dbgmsg::bWaitOnCrash=false;
 bool dbgmsg::bPrependDtTm=true;
+bool dbgmsg::bPrependDbgmsgId=true;
 std::stringstream dbgmsg::ssDbgMsgFileNameCrash;
 std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
 std::vector<std::string> dbgmsg::vLastDbgMsgs;
@@ -300,10 +301,13 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
     time(&rawtime);
     strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));
   //  strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&(attr.st_mtime)));
-    ssDump<<cTime<<" ";
+    ssDump<<cTime;
   }
 
-  ssDump<<ss.str();
+  if(bPrependDbgmsgId)
+    ssDump<<"("<<llDbgmsgId<<")";
+
+  ssDump<<" "<<ss.str();
 
   vLastDbgMsgs.push_back(ssDump.str());
   while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory)vLastDbgMsgs.erase(vLastDbgMsgs.begin());
@@ -330,7 +334,7 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
     std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());
   }
 
-  llDbgmsgId++;
+  llDbgmsgId++; //prepare next id
 
 //  fldDbgMsg.close(); //TODO prevents trunc on segfault? no...
 }

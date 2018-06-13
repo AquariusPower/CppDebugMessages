@@ -63,6 +63,7 @@
         static std::stringstream& ssDbgMsgPath();
         static void SetWaitOnCrash(bool b){bWaitOnCrash=b;}
         static void SetPrependDtTm(bool b){bPrependDtTm=b;}
+        static void SetPrependDbgmsgId(bool b){bPrependDbgmsgId=b;}
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
         ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
         #ifdef UNIX
@@ -91,6 +92,7 @@
         static int iMaxLinesInDebugFile;
         static std::vector<std::string> vLastDbgMsgs;
         static bool bPrependDtTm;
+        static bool bPrependDbgmsgId;
     };
 
     #define DBGCTSV(ex) "{"<<DBGTOSTR(ex)<<"}=\""<<(ex)<<"\";" //DBG "code to string" and value
