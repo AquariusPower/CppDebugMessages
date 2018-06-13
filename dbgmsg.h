@@ -86,6 +86,8 @@
         static std::ofstream& fldDbgMsg();
         static bool& bInitCompleted();
 
+        static int iMaxCrashLinesInMemory;
+        static bool bAddingLog;
         static unsigned long long llDbgmsgId;
         static std::ofstream* pfldDbgMsg;
         static std::stringstream* pssDbgMsgFileName;

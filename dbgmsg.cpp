@@ -56,14 +56,15 @@
 #define stat _stat
 #endif
 
-#define DBGLNSELF { \
-    if(!bInitCompleted()){ \
-      std::cout.flush();std::cout.clear();   \
-      std::cout<<DBGFLF<<":cout"<<std::endl; \
-      std::cerr.flush();std::cerr.clear();   \
-      std::cerr<<DBGFLF<<":cerr"<<std::endl; \
-    } \
+/* tries to make it sure both streams will work always even if they got broken by NULL! */
+#define DBGOE(s) { \
+    std::cout.flush();std::cout.clear();   \
+    std::cout<<"cout:"<<s<<std::endl; \
+    std::cerr.flush();std::cerr.clear();   \
+    std::cerr<<"cerr:"<<s<<std::endl; \
   };
+
+#define DBGLNSELF {if(!bInitCompleted()){ DBGOE(DBGFLF); }};
 
 bool* dbgmsg::pbInitCompleted=NULL;
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
@@ -79,8 +80,9 @@ std::vector<std::string> dbgmsg::vLastDbgMsgs;
 bool dbgmsg::bPidAllowed=false;
 int dbgmsg::iPid=0;
 unsigned long long dbgmsg::llDbgmsgId=0;
-int iMaxCrashLinesInMemory = 1000;
 int dbgmsg::iMaxLinesInDebugFile = 100000;
+int dbgmsg::iMaxCrashLinesInMemory = 1000;
+bool dbgmsg::bAddingLog=false;
 
 bool& dbgmsg::bInitCompleted(){
   if(pbInitCompleted==NULL)pbInitCompleted=new bool(false);
@@ -109,7 +111,7 @@ std::ofstream& dbgmsg::fldDbgMsg(){ // had to be a pointer, would not initialize
 
 void dbgmsg::SetDebugLogPath(const char* c){
   if(!ssDbgMsgPath().str().empty()){
-    std::cout<<"DBGMSG: path already set to '"<<ssDbgMsgPath().str()<<"', asked now '"<<c<<"'"<<std::endl;
+    DBGOE("DBGMSG: path already set to '"<<ssDbgMsgPath().str()<<"', asked now '"<<c<<"'");
     return;
   }
 
@@ -117,8 +119,7 @@ void dbgmsg::SetDebugLogPath(const char* c){
     ssDbgMsgPath().str(std::string()); //actually clear/empty it = ""
     ssDbgMsgPath().clear(); //good?
     ssDbgMsgPath()<<c;
-    std::cout.flush();std::cout.clear(); //fit it if needed
-    std::cout<<"DBGMSG: set path: "<<ssDbgMsgPath().str()<<std::endl;
+    DBGOE("DBGMSG: set path: "<<ssDbgMsgPath().str());
   }
 }
 
@@ -202,12 +203,7 @@ void dbgmsg::SigHndlr(int iSig)
 
   //1st! make it promptly visible!
   std::stringstream ssSig;ssSig<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'";
-  std::cerr.flush();std::cerr.clear(); //try to make it sure STDERR will work!
-  std::cerr<<ssSig.str()<<std::endl; //show it if possible
-
-  // send to stdout too
-  std::cout.flush();std::cout.clear(); //try to make it sure STDOUT will work!
-  std::cout<<ssSig.str()<<std::endl; //show it if possible
+  DBGOE(ssSig.str());
 
   //store on log file
   getCurrentStackTraceSS(true,true);
@@ -230,12 +226,10 @@ void dbgmsg::SigHndlr(int iSig)
     fldDbgMsgCrash.flush(); //just to be sure
   }
   fldDbgMsgCrash.close();
-  std::cout<<"CrashSaved: "<<ssDbgMsgFileNameCrash().str()<<std::endl;
-  std::cerr<<"CrashSaved: "<<ssDbgMsgFileNameCrash().str()<<std::endl;
+  DBGOE("CrashSaved: "<<ssDbgMsgFileNameCrash().str());
 
   if(bWaitOnCrash){
-    std::cout<<ss.str()<<std::endl; //granting it will be readable
-    std::cerr<<ss.str()<<std::endl; //granting it will be readable
+    DBGOE(ss.str()); //granting it will be readable
     std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
   }
 
@@ -249,11 +243,12 @@ void dbgmsg::init(){DBGLNSELF;
 
   initStream();DBGLNSELF;
 
-  getCurrentStackTraceSS(true,true);DBGLNSELF;
-  std::stringstream ss;ss<<"DBGMSG INIT COMPLETED!";DBGLNSELF;
-  addDbgMsgLog(ss);DBGLNSELF;
+  getCurrentStackTraceSS(true,false);DBGLNSELF;
+//  std::stringstream ss;ss<<"DBGMSG INIT COMPLETED!";DBGLNSELF;
+//  addDbgMsgLog(ss);DBGLNSELF;
+  DBGOE("DBGMSG INIT COMPLETED!");DBGLNSELF;
 
-  bInitCompleted()=true;
+  bInitCompleted()=true;DBGLNSELF;
 }
 
 #ifdef UNIX
@@ -315,14 +310,20 @@ void dbgmsg::initStream(){DBGLNSELF;
   ssDbgMsgFileNameCrash()<<".dbgmsg.log";DBGLNSELF; //suffix
   ssDbgMsgFileName()     <<".dbgmsg.log";DBGLNSELF; //suffix
 
-  std::cerr.flush();std::cerr.clear();DBGLNSELF; //fix if needed
-  std::cerr<<"dbgmsgLogE:"<<ssDbgMsgFileName().str()<<std::endl;DBGLNSELF; //sometimes cerr wont show anything (broken by NULL?)
-  std::cout.flush();std::cout.clear();DBGLNSELF; //fix if needed
-  std::cout<<"dbgmsgLogO:"<<ssDbgMsgFileName().str()<<std::endl;DBGLNSELF; //sometimes cout wont show anything (broken by NULL?)
+  DBGOE(ssDbgMsgFileName().str());DBGLNSELF;
 }
 
 void dbgmsg::addDbgMsgLog(std::stringstream& ss){
-  std::ostream& o=std::cout;DBGLNSELF; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
+  if(bAddingLog){
+    // dbgmsg internal error
+    DBGOE("dbgmsgLogO: already adding log!!!");
+    getCurrentStackTraceSS(true,false);
+    exit(1);
+  }
+
+  bAddingLog=true;
+
+  //keep this //std::ostream& o=std::cout;DBGLNSELF; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
 
   if(ssDbgMsgFileName().str().empty()){DBGLNSELF;
     init();DBGLNSELF;
@@ -351,8 +352,9 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
   ssDump<<" "<<ss.str();DBGLNSELF;
 
   vLastDbgMsgs.push_back(ssDump.str());DBGLNSELF;
-  while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory){
-    vLastDbgMsgs.erase(vLastDbgMsgs.begin());
+  if(vLastDbgMsgs.size()>100) //fail safe TODO iMaxCrashLinesInMemory may be not initialized?
+    while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory){
+      vLastDbgMsgs.erase(vLastDbgMsgs.begin());
   }DBGLNSELF;
 
 //  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
@@ -381,6 +383,7 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
   llDbgmsgId++; //prepare next id
 
 //  fldDbgMsg().close(); //TODO prevents trunc on segfault? no...
+  bAddingLog=false;
 }
 
 void dbgmsg::addDbgMsgLogTmp(){
