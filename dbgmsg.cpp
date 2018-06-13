@@ -56,9 +56,8 @@
 #define stat _stat
 #endif
 
-bool bInitCompleted=false;
 #define DBGLNSELF { \
-    if(!bInitCompleted){ \
+    if(!bInitCompleted()){ \
       std::cout.flush();std::cout.clear();   \
       std::cout<<DBGFLF<<":cout"<<std::endl; \
       std::cerr.flush();std::cerr.clear();   \
@@ -66,7 +65,7 @@ bool bInitCompleted=false;
     } \
   };
 
-
+bool* dbgmsg::pbInitCompleted=NULL;
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::stringstream dbgmsg::ssDbgMsgTmp;
 std::ofstream* dbgmsg::pfldDbgMsg=NULL;
@@ -82,6 +81,11 @@ int dbgmsg::iPid=0;
 unsigned long long dbgmsg::llDbgmsgId=0;
 int iMaxCrashLinesInMemory = 1000;
 int dbgmsg::iMaxLinesInDebugFile = 100000;
+
+bool& dbgmsg::bInitCompleted(){
+  if(pbInitCompleted==NULL)pbInitCompleted=new bool(false);
+  return (*pbInitCompleted);
+}
 
 std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault... TODO why?
   if(pssDbgMsgPath==NULL)pssDbgMsgPath=new std::stringstream();
@@ -249,7 +253,7 @@ void dbgmsg::init(){DBGLNSELF;
   std::stringstream ss;ss<<"DBGMSG INIT COMPLETED!";DBGLNSELF;
   addDbgMsgLog(ss);DBGLNSELF;
 
-  bInitCompleted=true;
+  bInitCompleted()=true;
 }
 
 #ifdef UNIX

@@ -65,6 +65,7 @@
         static void SetPrependDtTm(bool b){bPrependDtTm=b;}
         static void SetPrependDbgmsgId(bool b){bPrependDbgmsgId=b;}
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
+        static bool IsInitialized(){return bInitCompleted();}
         ~dbgmsg(){ if(fldDbgMsg().is_open())fldDbgMsg().close(); }
         #ifdef UNIX
           static void SigHndlr(int iSig);
@@ -83,11 +84,13 @@
         static std::stringstream& ssDbgMsgFileName();
         static std::stringstream& ssDbgMsgFileNameCrash();
         static std::ofstream& fldDbgMsg();
+        static bool& bInitCompleted();
 
         static unsigned long long llDbgmsgId;
         static std::ofstream* pfldDbgMsg;
         static std::stringstream* pssDbgMsgFileName;
         static std::stringstream* pssDbgMsgFileNameCrash;
+        static bool* pbInitCompleted;
         static bool bWaitOnCrash;
         static std::stringstream* pssDbgMsgPath;
         static bool bPidAllowed;
@@ -136,7 +139,7 @@
     #define DBGS(SS) (dbgmsg::str(SS.str().c_str(),DBGTOSTR(SS))) //stringstream
 
     //too messy... #define DBGEXEC(cmds) {DBGSS(DBGTOSTR(cmds));cmds;}
-    #define DBGEXEC(cmds) {cmds;} //this helps a lot by avoiding #ifdef for DBGMSG
+    #define DBGEXEC(cmds) {if(dbgmsg::IsInitialized()){cmds;}} //this helps a lot by avoiding #ifdef for DBGMSG
 
     #ifdef UNIX
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
