@@ -48,9 +48,18 @@
 
     // It would force std on everything... do not use! //using namespace std;
 
+    /* tries to make it sure both streams will work always even if they got broken by NULL! */
+    #define DBGOE(s) { \
+        std::cout.flush();std::cout.clear();   \
+        std::cout<<"DBGMSG:cout:"<<s<<std::endl; \
+        std::cerr.flush();std::cerr.clear();   \
+        std::cerr<<"DBGMSG:cerr:"<<s<<std::endl; \
+      };
+
     class dbgmsg{
       public:
         dbgmsg();
+        static void LazyConstructor();
         static std::stringstream ssDbgMsgTmp;
 
 //        static const char* b(bool b){return b?"true":"false";}
@@ -66,8 +75,8 @@
         static void SetPrependDtTm(bool b){bPrependDtTm=b;}
         static void SetPrependDbgmsgId(bool b){bPrependDbgmsgId=b;}
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
-        static bool IsInitialized(){return bInitCompleted();}
-        ~dbgmsg(){ if(fldDbgMsg().is_open())fldDbgMsg().close(); }
+        static bool IsInitialized(){return bInitCompleted;}
+        ~dbgmsg(){DBGOE("DBGMSG:destructor"); if(fldDbgMsg.is_open())fldDbgMsg.close(); } //TODO never run?
         #ifdef UNIX
           static void SigHndlr(int iSig);
           static char**            getCurrentStackTrace  (bool bShowNow, int& riTot);
@@ -81,21 +90,21 @@
         static void init();
         static void initStream();
         static std::string id(const char* cId);
-        static std::stringstream& ssDbgMsgPath();
-        static std::stringstream& ssDbgMsgFileName();
-        static std::stringstream& ssDbgMsgFileNameCrash();
-        static std::ofstream& fldDbgMsg();
-        static bool& bInitCompleted();
+//        static std::stringstream& ssDbgMsgPath();
+//        static std::stringstream& ssDbgMsgFileName();
+//        static std::stringstream& ssDbgMsgFileNameCrash();
+//        static std::ofstream& fldDbgMsg();
+//        static bool& bInitCompleted();
 
         static int iMaxCrashLinesInMemory;
         static bool bAddingLog;
         static unsigned long long llDbgmsgId;
-        static std::ofstream* pfldDbgMsg;
-        static std::stringstream* pssDbgMsgFileName;
-        static std::stringstream* pssDbgMsgFileNameCrash;
-        static bool* pbInitCompleted;
+        static std::ofstream fldDbgMsg;
+        static std::stringstream ssDbgMsgFileName;
+        static std::stringstream ssDbgMsgFileNameCrash;
+        static bool bInitCompleted;
         static bool bWaitOnCrash;
-        static std::stringstream* pssDbgMsgPath;
+        static std::stringstream ssDbgMsgPath;
         static bool bPidAllowed;
         static std::stringstream ssDbgMsgPartTmp;
         static int iPid;

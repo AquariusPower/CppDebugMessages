@@ -32,6 +32,7 @@
 #else
 
   //dbgmsg macro erasers
+  #define DBGOE
   #define DBGSS(s)
   #define DBG1(a)
   #define DBG2(a,b)
