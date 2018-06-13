@@ -147,11 +147,13 @@ std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
   for(int i=0;i<iTot;i++){
     char* c=paBtSymb[i];
     if(c==NULL)break;
-    ss<<"\t"<<c<<std::endl;
+    std::stringstream ss2;ss2<<"\t"<<c;
+    if(bLog)addDbgMsgLog(ss2);
+    ss<<ss2.str()<<std::endl;
   }
   free(paBtSymb);
 
-  if(bLog)addDbgMsgLog(ss);
+//  if(bLog)addDbgMsgLog(ss);
 
   return ss;
 }
