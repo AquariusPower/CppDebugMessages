@@ -356,7 +356,7 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
   }DBGLNSELF;
 
 //  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
-  fldDbgMsg()<<" ";DBGLNSELF;fldDbgMsg()<<ssDump.str();DBGLNSELF;fldDbgMsg()<<std::endl;DBGLNSELF;
+//  fldDbgMsg()<<" ";DBGLNSELF;fldDbgMsg()<<ssDump.str();DBGLNSELF;fldDbgMsg()<<std::endl;DBGLNSELF;
   fldDbgMsg()<<" "<<ssDump.str()<<std::endl;DBGLNSELF;
   fldDbgMsg().flush();DBGLNSELF; //TODO unnecessary?
 
