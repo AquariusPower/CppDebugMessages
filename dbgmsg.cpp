@@ -46,6 +46,8 @@
 #include <string.h> //strlen
 #include <unistd.h> //std::getpid()
 #include <ctime>
+#include <thread>
+#include <mutex>
 
 //#ifdef UNIX //TODO necessary?
 #include <time.h> //strftime
@@ -341,82 +343,92 @@ void dbgmsg::initStream(){DBGLNSELF;
   DBGOE(ssDbgMsgFileName.str());DBGLNSELF;
 }
 
+#define SYNCHRONIZED(mutexVar) for(std::unique_lock<std::recursive_mutex> ulk(mutexVar); ulk; ulk.unlock())
+std::recursive_mutex mtxAddMsg;
+std::thread::id otherAddMsgThreadId;
 void dbgmsg::addDbgMsgLog(std::stringstream& ss){
-  LazyConstructor();
+  SYNCHRONIZED(mtxAddMsg){
+    LazyConstructor();
 
-  if(bAddingLog){
-    // dbgmsg internal error
-    DBGOE("already adding log!!!");
-    DBGOE("id="<<llDbgmsgId);
-    DBGOE("v size = "<<vLastDbgMsgs.size());
-    getCurrentStackTraceSS(true,false);
-    DBGOE("exiting now!!!");
-    exit(1);
+    if(bAddingLog){
+      // dbgmsg internal error
+      DBGOE("already adding log!!!");
+      DBGOE("id="<<llDbgmsgId);
+      DBGOE("v size = "<<vLastDbgMsgs.size());
+      DBGOE("Other thread id: "<<otherAddMsgThreadId);
+      DBGOE("This  thread id: "<<std::this_thread::get_id());
+
+      getCurrentStackTraceSS(true,false);
+      DBGOE("exiting now!!!");
+      exit(1); //TODO not completely exiting... crash it?
+    }
+
+    bAddingLog=true;
+
+    otherAddMsgThreadId=std::this_thread::get_id();
+
+    //keep this //std::ostream& o=std::cout;DBGLNSELF; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
+
+    if(ssDbgMsgFileName.str().empty()){DBGLNSELF;
+      init();DBGLNSELF;
+    }DBGLNSELF;
+
+    if(!fldDbgMsg.is_open()){DBGLNSELF;
+      fldDbgMsg.open(ssDbgMsgFileName.str());DBGLNSELF;
+    }DBGLNSELF;
+
+    std::stringstream ssDump;DBGLNSELF;
+
+    if(bPrependDtTm){DBGLNSELF;
+      static int iTmSz=100;
+      char cTime[iTmSz];
+      time_t rawtime;
+      time(&rawtime);
+      strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));
+    //  strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&(attr.st_mtime)));
+      ssDump<<cTime;
+    }DBGLNSELF;
+
+    if(bPrependDbgmsgId){DBGLNSELF;
+      ssDump<<"("<<llDbgmsgId<<")";
+    }DBGLNSELF;
+
+    ssDump<<" "<<ss.str();DBGLNSELF;
+
+    vLastDbgMsgs.push_back(ssDump.str());DBGLNSELF;
+    if(vLastDbgMsgs.size()>100) //fail safe TODO iMaxCrashLinesInMemory may be not initialized?
+      while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory){
+        vLastDbgMsgs.erase(vLastDbgMsgs.begin());
+    }DBGLNSELF;
+
+  //  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
+  //  fldDbgMsg()<<" ";DBGLNSELF;fldDbgMsg()<<ssDump.str();DBGLNSELF;fldDbgMsg()<<std::endl;DBGLNSELF;
+    fldDbgMsg<<" "<<ssDump.str()<<std::endl;DBGLNSELF;
+    fldDbgMsg.flush();DBGLNSELF; //TODO unnecessary?
+
+    if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){DBGLNSELF; //TODO is it helping preventing high IO ?
+      std::stringstream ssOldFileName;DBGLNSELF;
+      ssOldFileName<<ssDbgMsgFileName.str()<<".old";DBGLNSELF;
+
+  //    std::stringstream ssTmp;
+  //    ssTmp<<" [removing old debug file "<<ssOldFileName.str()<<"]";
+  //    std::cerr<<ssTmp.str()<<std::endl;
+  //    fldDbgMsg<<ssTmp.str()<<std::endl;
+      std::remove(ssOldFileName.str().c_str());DBGLNSELF; //clean older b4 renaming
+
+  //    ssTmp<<" [renaming this debug file to "<<ssOldFileName.str()<<"]";
+  //    std::cerr<<ssTmp.str()<<std::endl;
+  //    fldDbgMsg<<ssTmp.str()<<std::endl;
+      fldDbgMsg.close();DBGLNSELF;
+
+      std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());DBGLNSELF;
+    }DBGLNSELF;
+
+    llDbgmsgId++; //prepare next id
+
+  //  fldDbgMsg().close(); //TODO prevents trunc on segfault? no...
+    bAddingLog=false;
   }
-
-  bAddingLog=true;
-
-  //keep this //std::ostream& o=std::cout;DBGLNSELF; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
-
-  if(ssDbgMsgFileName.str().empty()){DBGLNSELF;
-    init();DBGLNSELF;
-  }DBGLNSELF;
-
-  if(!fldDbgMsg.is_open()){DBGLNSELF;
-    fldDbgMsg.open(ssDbgMsgFileName.str());DBGLNSELF;
-  }DBGLNSELF;
-
-  std::stringstream ssDump;DBGLNSELF;
-
-  if(bPrependDtTm){DBGLNSELF;
-    static int iTmSz=100;
-    char cTime[iTmSz];
-    time_t rawtime;
-    time(&rawtime);
-    strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));
-  //  strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&(attr.st_mtime)));
-    ssDump<<cTime;
-  }DBGLNSELF;
-
-  if(bPrependDbgmsgId){DBGLNSELF;
-    ssDump<<"("<<llDbgmsgId<<")";
-  }DBGLNSELF;
-
-  ssDump<<" "<<ss.str();DBGLNSELF;
-
-  vLastDbgMsgs.push_back(ssDump.str());DBGLNSELF;
-  if(vLastDbgMsgs.size()>100) //fail safe TODO iMaxCrashLinesInMemory may be not initialized?
-    while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory){
-      vLastDbgMsgs.erase(vLastDbgMsgs.begin());
-  }DBGLNSELF;
-
-//  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
-//  fldDbgMsg()<<" ";DBGLNSELF;fldDbgMsg()<<ssDump.str();DBGLNSELF;fldDbgMsg()<<std::endl;DBGLNSELF;
-  fldDbgMsg<<" "<<ssDump.str()<<std::endl;DBGLNSELF;
-  fldDbgMsg.flush();DBGLNSELF; //TODO unnecessary?
-
-  if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){DBGLNSELF; //TODO is it helping preventing high IO ?
-    std::stringstream ssOldFileName;DBGLNSELF;
-    ssOldFileName<<ssDbgMsgFileName.str()<<".old";DBGLNSELF;
-
-//    std::stringstream ssTmp;
-//    ssTmp<<" [removing old debug file "<<ssOldFileName.str()<<"]";
-//    std::cerr<<ssTmp.str()<<std::endl;
-//    fldDbgMsg<<ssTmp.str()<<std::endl;
-    std::remove(ssOldFileName.str().c_str());DBGLNSELF; //clean older b4 renaming
-
-//    ssTmp<<" [renaming this debug file to "<<ssOldFileName.str()<<"]";
-//    std::cerr<<ssTmp.str()<<std::endl;
-//    fldDbgMsg<<ssTmp.str()<<std::endl;
-    fldDbgMsg.close();DBGLNSELF;
-
-    std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());DBGLNSELF;
-  }DBGLNSELF;
-
-  llDbgmsgId++; //prepare next id
-
-//  fldDbgMsg().close(); //TODO prevents trunc on segfault? no...
-  bAddingLog=false;
 }
 
 void dbgmsg::addDbgMsgLogTmp(){
