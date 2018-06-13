@@ -56,15 +56,25 @@
 #define stat _stat
 #endif
 
+bool bInitCompleted=false;
+#define DBGLNSELF { \
+    if(!bInitCompleted){ \
+      std::cout.flush();std::cout.clear();   \
+      std::cout<<DBGFLF<<":cout"<<std::endl; \
+      std::cerr.flush();std::cerr.clear();   \
+      std::cerr<<DBGFLF<<":cerr"<<std::endl; \
+    } \
+  };
+
 
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::stringstream dbgmsg::ssDbgMsgTmp;
-std::ofstream dbgmsg::fldDbgMsg;
-std::stringstream dbgmsg::ssDbgMsgFileName;
+std::ofstream* dbgmsg::pfldDbgMsg=NULL;
+std::stringstream* dbgmsg::pssDbgMsgFileName=NULL;
 bool dbgmsg::bWaitOnCrash=false;
 bool dbgmsg::bPrependDtTm=true;
 bool dbgmsg::bPrependDbgmsgId=true;
-std::stringstream dbgmsg::ssDbgMsgFileNameCrash;
+std::stringstream* dbgmsg::pssDbgMsgFileNameCrash=NULL;
 std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
 std::vector<std::string> dbgmsg::vLastDbgMsgs;
 bool dbgmsg::bPidAllowed=false;
@@ -73,9 +83,24 @@ unsigned long long dbgmsg::llDbgmsgId=0;
 int iMaxCrashLinesInMemory = 1000;
 int dbgmsg::iMaxLinesInDebugFile = 100000;
 
-std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault...
+std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault... TODO why?
   if(pssDbgMsgPath==NULL)pssDbgMsgPath=new std::stringstream();
   return (*pssDbgMsgPath);
+}
+
+std::stringstream& dbgmsg::ssDbgMsgFileName(){ // had to be a pointer, would not initialize causing segfault... TODO why?
+  if(pssDbgMsgFileName==NULL)pssDbgMsgFileName=new std::stringstream();
+  return (*pssDbgMsgFileName);
+}
+
+std::stringstream& dbgmsg::ssDbgMsgFileNameCrash(){ // had to be a pointer, would not initialize causing segfault... TODO why?
+  if(pssDbgMsgFileNameCrash==NULL)pssDbgMsgFileNameCrash=new std::stringstream();
+  return (*pssDbgMsgFileNameCrash);
+}
+
+std::ofstream& dbgmsg::fldDbgMsg(){ // had to be a pointer, would not initialize causing segfault... TODO why?
+  if(pfldDbgMsg==NULL)pfldDbgMsg=new std::ofstream();
+  return (*pfldDbgMsg);
 }
 
 void dbgmsg::SetDebugLogPath(const char* c){
@@ -185,10 +210,10 @@ void dbgmsg::SigHndlr(int iSig)
 
   if(bWaitOnCrash)addDbgMsgLog(ss);
   addDbgMsgLog(ssSig);
-  fldDbgMsg.close(); //this does NOT prevents trunc...
+  fldDbgMsg().close(); //this does NOT prevents trunc...
 
   std::ofstream fldDbgMsgCrash;
-  fldDbgMsgCrash.open(ssDbgMsgFileNameCrash.str());
+  fldDbgMsgCrash.open(ssDbgMsgFileNameCrash().str());
   long long llDbgmsgIdCrash = llDbgmsgId - iMaxCrashLinesInMemory;
   if(llDbgmsgIdCrash<0)llDbgmsgIdCrash=0;
   int iMaxCrashLines = 100;
@@ -199,8 +224,8 @@ void dbgmsg::SigHndlr(int iSig)
     fldDbgMsgCrash.flush(); //just to be sure
   }
   fldDbgMsgCrash.close();
-  std::cout<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
-  std::cerr<<"CrashSaved: "<<ssDbgMsgFileNameCrash.str()<<std::endl;
+  std::cout<<"CrashSaved: "<<ssDbgMsgFileNameCrash().str()<<std::endl;
+  std::cerr<<"CrashSaved: "<<ssDbgMsgFileNameCrash().str()<<std::endl;
 
   if(bWaitOnCrash){
     std::cout<<ss.str()<<std::endl; //granting it will be readable
@@ -211,92 +236,99 @@ void dbgmsg::SigHndlr(int iSig)
   exit(iSig); //1 or something else to just identify it was handled?
 }
 
-void dbgmsg::init(){
+void dbgmsg::init(){DBGLNSELF;
   #ifdef UNIX
-    initSignals();
+    initSignals();DBGLNSELF;
   #endif
 
-  initStream();
+  initStream();DBGLNSELF;
 
-  getCurrentStackTraceSS(true,true);
+  getCurrentStackTraceSS(true,true);DBGLNSELF;
+  std::stringstream ss;ss<<"DBGMSG INIT COMPLETED!";DBGLNSELF;
+  addDbgMsgLog(ss);DBGLNSELF;
+
+  bInitCompleted=true;
 }
 
 #ifdef UNIX
-void dbgmsg::initSignals(){
+void dbgmsg::initSignals(){DBGLNSELF;
   // as specified at `info signal`
   //TODO determine if these handlers are already set (unless it will just add the handler)
-  signal(SIGHUP , dbgmsg::SigHndlr);
-  signal(SIGINT , dbgmsg::SigHndlr);
-  signal(SIGQUIT, dbgmsg::SigHndlr);
-  signal(SIGILL , dbgmsg::SigHndlr);
-  signal(SIGABRT, dbgmsg::SigHndlr);
-  signal(SIGFPE , dbgmsg::SigHndlr);
-  signal(SIGKILL, dbgmsg::SigHndlr);
-  signal(SIGSEGV, dbgmsg::SigHndlr);
-  signal(SIGPIPE, dbgmsg::SigHndlr);
-  signal(SIGTERM, dbgmsg::SigHndlr);
-  signal(SIGBUS , dbgmsg::SigHndlr);
-  signal(SIGSYS , dbgmsg::SigHndlr);
-  signal(SIGTRAP, dbgmsg::SigHndlr);
+  signal(SIGHUP , dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGINT , dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGQUIT, dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGILL , dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGABRT, dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGFPE , dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGKILL, dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGSEGV, dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGPIPE, dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGTERM, dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGBUS , dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGSYS , dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGTRAP, dbgmsg::SigHndlr);DBGLNSELF;
   //? SIGXFSZ
 }
 #endif
 
-void dbgmsg::initStream(){
-  ssDbgMsgPath()<<"";
+void dbgmsg::initStream(){DBGLNSELF;
+  ssDbgMsgPath()<<"";DBGLNSELF;
 
   // path
 #ifdef UNIX
-  if(ssDbgMsgPath().str().empty()){
-    ssDbgMsgPath()<<getenv("HOME")<<"/";
-  }
+  if(ssDbgMsgPath().str().empty()){DBGLNSELF;
+    ssDbgMsgPath()<<getenv("HOME")<<"/";DBGLNSELF;
+  }DBGLNSELF;
 #endif
 
-  if(!ssDbgMsgPath().str().empty()){
-    ssDbgMsgFileName<<ssDbgMsgPath().str()<<"/";
-  }else{
-    ssDbgMsgFileName<<"./"; //will be relative to current execution path
-  }
+  if(!ssDbgMsgPath().str().empty()){DBGLNSELF;
+    ssDbgMsgFileName()<<ssDbgMsgPath().str()<<"/";DBGLNSELF;
+  }else{DBGLNSELF;
+    ssDbgMsgFileName()<<"./";DBGLNSELF; //will be relative to current execution path
+  }DBGLNSELF;
 
   // filename
 #ifdef __USE_GNU
-  char* c=program_invocation_short_name; //auto "guess work" that should work fine
-  if(c!=NULL){
-    ssDbgMsgFileName<<"."<<c;
-  }
+  char* c=program_invocation_short_name;DBGLNSELF; //auto "guess work" that should work fine
+  if(c!=NULL){DBGLNSELF;
+    ssDbgMsgFileName()<<"."<<c;DBGLNSELF;
+  }DBGLNSELF;
 #endif
 
   //TODO add date/time on filename
-  iPid=::getpid();
-  if(bPidAllowed)ssDbgMsgFileName<<".pid"<<iPid;
+  iPid=::getpid();DBGLNSELF;
+  if(bPidAllowed){DBGLNSELF;
+    ssDbgMsgFileName()<<".pid"<<iPid;DBGLNSELF;
+  }DBGLNSELF;
 
-  ssDbgMsgFileNameCrash<<ssDbgMsgFileName.str()<<".Crash";
-  if(!bPidAllowed)ssDbgMsgFileNameCrash<<".pid"<<iPid; //this will only be generated if it crashes
+  ssDbgMsgFileNameCrash()<<ssDbgMsgFileName().str()<<".Crash";DBGLNSELF;
+  if(!bPidAllowed){DBGLNSELF;
+    ssDbgMsgFileNameCrash()<<".pid"<<iPid;DBGLNSELF; //this will only be generated if it crashes
+  }DBGLNSELF;
 
-  ssDbgMsgFileNameCrash<<".dbgmsg.log"; //suffix
-  ssDbgMsgFileName     <<".dbgmsg.log"; //suffix
+  ssDbgMsgFileNameCrash()<<".dbgmsg.log";DBGLNSELF; //suffix
+  ssDbgMsgFileName()     <<".dbgmsg.log";DBGLNSELF; //suffix
 
-  std::cerr.flush();std::cerr.clear();//fix if needed
-  std::cerr<<"dbgmsgLogE:"<<ssDbgMsgFileName.str()<<std::endl; //sometimes cerr wont show anything (broken by NULL?)
-  std::cout.flush();std::cout.clear();//fix if needed
-  std::cout<<"dbgmsgLogO:"<<ssDbgMsgFileName.str()<<std::endl; //sometimes cout wont show anything (broken by NULL?)
+  std::cerr.flush();std::cerr.clear();DBGLNSELF; //fix if needed
+  std::cerr<<"dbgmsgLogE:"<<ssDbgMsgFileName().str()<<std::endl;DBGLNSELF; //sometimes cerr wont show anything (broken by NULL?)
+  std::cout.flush();std::cout.clear();DBGLNSELF; //fix if needed
+  std::cout<<"dbgmsgLogO:"<<ssDbgMsgFileName().str()<<std::endl;DBGLNSELF; //sometimes cout wont show anything (broken by NULL?)
 }
 
 void dbgmsg::addDbgMsgLog(std::stringstream& ss){
-  std::ostream& o=std::cout; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
-  //debug self helper, put anywhere: std::cerr<<"RM:"<<__LINE__<<std::endl;
+  std::ostream& o=std::cout;DBGLNSELF; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
 
-  if(ssDbgMsgFileName.str().empty()){
-    init();
-  }
+  if(ssDbgMsgFileName().str().empty()){DBGLNSELF;
+    init();DBGLNSELF;
+  }DBGLNSELF;
 
-  if(!fldDbgMsg.is_open()){
-    fldDbgMsg.open(ssDbgMsgFileName.str());
-  }
+  if(!fldDbgMsg().is_open()){DBGLNSELF;
+    fldDbgMsg().open(ssDbgMsgFileName().str());DBGLNSELF;
+  }DBGLNSELF;
 
-  std::stringstream ssDump;
+  std::stringstream ssDump;DBGLNSELF;
 
-  if(bPrependDtTm){
+  if(bPrependDtTm){DBGLNSELF;
     static int iTmSz=100;
     char cTime[iTmSz];
     time_t rawtime;
@@ -304,41 +336,45 @@ void dbgmsg::addDbgMsgLog(std::stringstream& ss){
     strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));
   //  strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&(attr.st_mtime)));
     ssDump<<cTime;
-  }
+  }DBGLNSELF;
 
-  if(bPrependDbgmsgId)
+  if(bPrependDbgmsgId){DBGLNSELF;
     ssDump<<"("<<llDbgmsgId<<")";
+  }DBGLNSELF;
 
-  ssDump<<" "<<ss.str();
+  ssDump<<" "<<ss.str();DBGLNSELF;
 
-  vLastDbgMsgs.push_back(ssDump.str());
-  while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory)vLastDbgMsgs.erase(vLastDbgMsgs.begin());
+  vLastDbgMsgs.push_back(ssDump.str());DBGLNSELF;
+  while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory){
+    vLastDbgMsgs.erase(vLastDbgMsgs.begin());
+  }DBGLNSELF;
 
 //  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
-  fldDbgMsg<<" "<<ssDump.str()<<std::endl;
-  fldDbgMsg.flush(); //TODO unnecessary?
+  fldDbgMsg()<<" ";DBGLNSELF;fldDbgMsg()<<ssDump.str();DBGLNSELF;fldDbgMsg()<<std::endl;DBGLNSELF;
+  fldDbgMsg()<<" "<<ssDump.str()<<std::endl;DBGLNSELF;
+  fldDbgMsg().flush();DBGLNSELF; //TODO unnecessary?
 
-  if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){ //TODO is it helping preventing high IO ?
-    std::stringstream ssOldFileName;
-    ssOldFileName<<ssDbgMsgFileName.str()<<".old";
+  if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){DBGLNSELF; //TODO is it helping preventing high IO ?
+    std::stringstream ssOldFileName;DBGLNSELF;
+    ssOldFileName<<ssDbgMsgFileName().str()<<".old";DBGLNSELF;
 
 //    std::stringstream ssTmp;
 //    ssTmp<<" [removing old debug file "<<ssOldFileName.str()<<"]";
 //    std::cerr<<ssTmp.str()<<std::endl;
 //    fldDbgMsg<<ssTmp.str()<<std::endl;
-    std::remove(ssOldFileName.str().c_str()); //clean older b4 renaming
+    std::remove(ssOldFileName.str().c_str());DBGLNSELF; //clean older b4 renaming
 
 //    ssTmp<<" [renaming this debug file to "<<ssOldFileName.str()<<"]";
 //    std::cerr<<ssTmp.str()<<std::endl;
 //    fldDbgMsg<<ssTmp.str()<<std::endl;
-    fldDbgMsg.close();
+    fldDbgMsg().close();DBGLNSELF;
 
-    std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());
-  }
+    std::rename(ssDbgMsgFileName().str().c_str(), ssOldFileName.str().c_str());DBGLNSELF;
+  }DBGLNSELF;
 
   llDbgmsgId++; //prepare next id
 
-//  fldDbgMsg.close(); //TODO prevents trunc on segfault? no...
+//  fldDbgMsg().close(); //TODO prevents trunc on segfault? no...
 }
 
 void dbgmsg::addDbgMsgLogTmp(){
@@ -348,7 +384,7 @@ void dbgmsg::addDbgMsgLogTmp(){
   // if there was a NULL, it will break the temp stream variable
   ssDbgMsgTmp<<"test";
   if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
-    fldDbgMsg<<" "<<"!!!!!!!!!!!! DbgMsg problem: some NULL went to the stream !!!!!!!!!!!!"<<std::endl;
+    fldDbgMsg()<<" "<<"!!!!!!!!!!!! DbgMsg problem: some NULL went to the stream !!!!!!!!!!!!"<<std::endl;
   }
   ssDbgMsgTmp.str(std::string()); //empty it from "test" now
 

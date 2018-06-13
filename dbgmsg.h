@@ -33,6 +33,7 @@
 
   // filename only depends on cpp core
   #define __FILENAME__ (__builtin_strrchr(__FILE__,'/') ? __builtin_strrchr(__FILE__,'/')+1 : __FILE__)
+  #define DBGFLF __FILENAME__<<":"<<__LINE__<<":"<<__FUNCTION__
 
   #ifdef DBGMSG
     #include <iostream>
@@ -64,7 +65,7 @@
         static void SetPrependDtTm(bool b){bPrependDtTm=b;}
         static void SetPrependDbgmsgId(bool b){bPrependDbgmsgId=b;}
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
-        ~dbgmsg(){ if(fldDbgMsg.is_open())fldDbgMsg.close(); }
+        ~dbgmsg(){ if(fldDbgMsg().is_open())fldDbgMsg().close(); }
         #ifdef UNIX
           static void SigHndlr(int iSig);
           static char**            getCurrentStackTrace  (bool bShowNow, int& riTot);
@@ -79,11 +80,14 @@
         static void initStream();
         static std::string id(const char* cId);
         static std::stringstream& ssDbgMsgPath();
+        static std::stringstream& ssDbgMsgFileName();
+        static std::stringstream& ssDbgMsgFileNameCrash();
+        static std::ofstream& fldDbgMsg();
 
         static unsigned long long llDbgmsgId;
-        static std::ofstream fldDbgMsg;
-        static std::stringstream ssDbgMsgFileName;
-        static std::stringstream ssDbgMsgFileNameCrash;
+        static std::ofstream* pfldDbgMsg;
+        static std::stringstream* pssDbgMsgFileName;
+        static std::stringstream* pssDbgMsgFileNameCrash;
         static bool bWaitOnCrash;
         static std::stringstream* pssDbgMsgPath;
         static bool bPidAllowed;
@@ -100,7 +104,7 @@
 
     /* easy/non-cumbersome debug messages */
     // base stream SS
-    #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<__FILENAME__<<":"<<__LINE__<<":"<<__FUNCTION__<<":"<<s; dbgmsg::addDbgMsgLogTmp(); }
+    #define DBGSS(s) { dbgmsg::ssDbgMsgTmp<<DBGFLF<<":"<<s; dbgmsg::addDbgMsgLogTmp(); }
     //TODO #define DBGN(chk) "("<<(chk==NULL?"NULL":chk)<<")"
     #define DBG1(a) DBGSS(DBGCTSV(a))
     #define DBG2(a,b) DBGSS(DBGCTSV(a)<<DBGCTSV(b))
