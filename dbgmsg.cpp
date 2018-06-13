@@ -84,7 +84,7 @@ void dbgmsg::SetDebugLogPath(const char* c){
     return;
   }
 
-  if(c!=NULL){ //TODO validate path b4 setting it
+  if(c!=NULL){ //TODO validate (and/or create?) path b4 setting it
     ssDbgMsgPath().str(std::string()); //actually clear/empty it = ""
     ssDbgMsgPath().clear(); //good?
     ssDbgMsgPath()<<c;
@@ -217,6 +217,8 @@ void dbgmsg::init(){
   #endif
 
   initStream();
+
+  getCurrentStackTraceSS(true,true);
 }
 
 #ifdef UNIX

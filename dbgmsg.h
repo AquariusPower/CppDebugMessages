@@ -60,7 +60,6 @@
         static void addDbgMsgLog(std::stringstream& ss);
         static void SetDebugLogPath(const char* c);
         static void SetAllowPidOnLogName(){bPidAllowed=true;}
-        static std::stringstream& ssDbgMsgPath();
         static void SetWaitOnCrash(bool b){bWaitOnCrash=b;}
         static void SetPrependDtTm(bool b){bPrependDtTm=b;}
         static void SetPrependDbgmsgId(bool b){bPrependDbgmsgId=b;}
@@ -79,6 +78,7 @@
         static void init();
         static void initStream();
         static std::string id(const char* cId);
+        static std::stringstream& ssDbgMsgPath();
 
         static unsigned long long llDbgmsgId;
         static std::ofstream fldDbgMsg;

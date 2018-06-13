@@ -1,3 +1,10 @@
+/**
+ * !!!WARNING!!!
+ *  This file cannot be included in other .h files TODO why?
+ *  These macros cannot be used at inline methods declared in .h files TODO why?
+ *  If you do this, it may SEGFAULT only when being run. Compiler and linker will warn nothing about the problem!
+ */
+
 #ifndef INCLUDE_DBGMSGPROJ_H_
 #define INCLUDE_DBGMSGPROJ_H_
 
@@ -24,6 +31,7 @@
 
 #else
 
+  //dbgmsg macro erasers
   #define DBGSS(s)
   #define DBG1(a)
   #define DBG2(a,b)
