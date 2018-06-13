@@ -66,44 +66,80 @@
 
 #define DBGLNSELF {if(!bInitCompleted()){ DBGOE(DBGFLF); }};
 
-bool* dbgmsg::pbInitCompleted=NULL;
+//bool* dbgmsg::pbInitCompleted=NULL;
+//std::stringstream dbgmsg::ssDbgMsgPartTmp;
+//std::stringstream dbgmsg::ssDbgMsgTmp;
+//std::ofstream* dbgmsg::pfldDbgMsg=NULL;
+//std::stringstream* dbgmsg::pssDbgMsgFileName=NULL;
+//bool dbgmsg::bWaitOnCrash=false;
+//bool dbgmsg::bPrependDtTm=true;
+//bool dbgmsg::bPrependDbgmsgId=true;
+//std::stringstream* dbgmsg::pssDbgMsgFileNameCrash=NULL;
+//std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
+//std::vector<std::string> dbgmsg::vLastDbgMsgs;
+//bool dbgmsg::bPidAllowed=false;
+//int dbgmsg::iPid=0;
+//unsigned long long dbgmsg::llDbgmsgId=0;
+//int dbgmsg::iMaxLinesInDebugFile = 100000;
+//int dbgmsg::iMaxCrashLinesInMemory = 1000;
+//bool dbgmsg::bAddingLog=false;
+
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::stringstream dbgmsg::ssDbgMsgTmp;
-std::ofstream* dbgmsg::pfldDbgMsg=NULL;
-std::stringstream* dbgmsg::pssDbgMsgFileName=NULL;
-bool dbgmsg::bWaitOnCrash=false;
-bool dbgmsg::bPrependDtTm=true;
-bool dbgmsg::bPrependDbgmsgId=true;
-std::stringstream* dbgmsg::pssDbgMsgFileNameCrash=NULL;
-std::stringstream* dbgmsg::pssDbgMsgPath=NULL;
 std::vector<std::string> dbgmsg::vLastDbgMsgs;
-bool dbgmsg::bPidAllowed=false;
-int dbgmsg::iPid=0;
-unsigned long long dbgmsg::llDbgmsgId=0;
-int dbgmsg::iMaxLinesInDebugFile = 100000;
-int dbgmsg::iMaxCrashLinesInMemory = 1000;
-bool dbgmsg::bAddingLog=false;
 
-bool& dbgmsg::bInitCompleted(){
+bool* dbgmsg::pbInitCompleted;
+std::ofstream* dbgmsg::pfldDbgMsg;
+std::stringstream* dbgmsg::pssDbgMsgFileName;
+bool dbgmsg::bWaitOnCrash;
+bool dbgmsg::bPrependDtTm;
+bool dbgmsg::bPrependDbgmsgId;
+std::stringstream* dbgmsg::pssDbgMsgFileNameCrash;
+std::stringstream* dbgmsg::pssDbgMsgPath;
+bool dbgmsg::bPidAllowed;
+int dbgmsg::iPid;
+unsigned long long dbgmsg::llDbgmsgId;
+int dbgmsg::iMaxLinesInDebugFile;
+int dbgmsg::iMaxCrashLinesInMemory;
+bool dbgmsg::bAddingLog;
+
+dbgmsg::dbgmsg(){
+  ssDbgMsgPartTmp.clear(); //just to init
+  ssDbgMsgTmp.clear(); //just to init
+  vLastDbgMsgs.clear(); //just to init
+
+  pbInitCompleted=NULL;
+  pfldDbgMsg=NULL;
+  pssDbgMsgFileName=NULL;
+  bWaitOnCrash=false;
+  bPrependDtTm=true;
+  bPrependDbgmsgId=true;
+  pssDbgMsgFileNameCrash=NULL;
+  pssDbgMsgPath=NULL;
+  bPidAllowed=false;
+  iPid=0;
+  llDbgmsgId=0;
+  iMaxLinesInDebugFile = 100000;
+  iMaxCrashLinesInMemory = 1000;
+  bAddingLog=false;
+}
+
+bool& dbgmsg::bInitCompleted(){ // had to be a pointer, would not initialize causing segfault... TODO why?
   if(pbInitCompleted==NULL)pbInitCompleted=new bool(false);
   return (*pbInitCompleted);
 }
-
 std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault... TODO why?
   if(pssDbgMsgPath==NULL)pssDbgMsgPath=new std::stringstream();
   return (*pssDbgMsgPath);
 }
-
 std::stringstream& dbgmsg::ssDbgMsgFileName(){ // had to be a pointer, would not initialize causing segfault... TODO why?
   if(pssDbgMsgFileName==NULL)pssDbgMsgFileName=new std::stringstream();
   return (*pssDbgMsgFileName);
 }
-
 std::stringstream& dbgmsg::ssDbgMsgFileNameCrash(){ // had to be a pointer, would not initialize causing segfault... TODO why?
   if(pssDbgMsgFileNameCrash==NULL)pssDbgMsgFileNameCrash=new std::stringstream();
   return (*pssDbgMsgFileNameCrash);
 }
-
 std::ofstream& dbgmsg::fldDbgMsg(){ // had to be a pointer, would not initialize causing segfault... TODO why?
   if(pfldDbgMsg==NULL)pfldDbgMsg=new std::ofstream();
   return (*pfldDbgMsg);

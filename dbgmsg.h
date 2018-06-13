@@ -50,6 +50,7 @@
 
     class dbgmsg{
       public:
+        dbgmsg();
         static std::stringstream ssDbgMsgTmp;
 
 //        static const char* b(bool b){return b?"true":"false";}
