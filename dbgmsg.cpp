@@ -83,8 +83,10 @@ dbgmsg::dbgmsg(){DBGOE(DBGFLF<<":DBGMSG:RealConstructorIn"); //TODO never run?
   LazyConstructor();
 }
 
-void dbgmsg::LazyConstructor(){DBGOE(DBGFLF<<":DBGMSG:In");
+void dbgmsg::LazyConstructor(){
   if(llDesperateInternalInitRandomKey==39854029834543289LL)return;
+
+  DBGOE(DBGFLF<<":DBGMSG:In");
 
   bInitCompleted=false;DBGLNSELF; //FIRST!
 
@@ -108,6 +110,8 @@ void dbgmsg::LazyConstructor(){DBGOE(DBGFLF<<":DBGMSG:In");
   getCurrentStackTraceSS(true,false);
 
   llDesperateInternalInitRandomKey=39854029834543289LL;
+
+  DBGOE(DBGFLF<<":DBGMSG:Out");
 }
 
 //bool& dbgmsg::bInitCompleted(){ // had to be a pointer, would not initialize causing segfault... TODO why?
