@@ -10,6 +10,12 @@ strBranch="$1";shift #help <strBranch> user branch on github
 
 FUNCexecEchoW git branch
 
-FUNCexecEchoW git checkout -b "${strUser}-${strBranch}" master
+if ! FUNCexecEchoW git checkout -b "${strUser}-${strBranch}" master;then
+  if ! FUNCexecEchoW git checkout "${strUser}-${strBranch}";then
+    exit 1
+  else
+    FUNCexecEchoW git branch
+  fi
+fi
 
 FUNCexecEcho git pull "https://github.com/$strUser/${strProject}.git" "${strBranch}"
