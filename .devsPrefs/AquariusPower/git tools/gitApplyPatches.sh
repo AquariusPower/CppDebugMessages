@@ -1,6 +1,6 @@
 #!/bin/bash
 
-strHelp="create a new branch using another user's branch of that project"
+strHelp="apply all patches"
 source "`which gitToolsCommonCode.sh`"
 
 function FUNCSBKPapplyPatch() { 
