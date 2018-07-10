@@ -171,6 +171,24 @@ char** dbgmsg::getCurrentStackTrace(bool bShowNow,int& riTot){
   return backtrace_symbols(paStkBuff,riTot);;
 }
 
+void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog)
+{ //TODO collect per line to log properly TODO use ALSO the stack collected not thru pstack
+  std::ostringstream osStkCmd;
+  osStkCmd<<"pstack "<<iPid<<" |c++filt";
+  FILE* pipeFile = popen(osStkCmd.str().c_str(),"r");
+  if(pipeFile!=NULL){
+    const int i=10*1024;
+    char buf[i];
+    if(fread(buf,1,i,pipeFile)>0){
+      DBGOE("DemangledStackTrace:\n"<<buf);
+      std::stringstream ss;ss<<"DemangledStackTrace:\n"<<buf;
+      if(bLog)addDbgMsgLog(ss);
+    }
+  }else{
+    DBGOE("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
+  }
+}
+
 std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
   int iTot=0;
   char** paBtSymb = getCurrentStackTrace(bShowNow,iTot);
@@ -258,7 +276,7 @@ void dbgmsg::SigHndlr(int iSig)
 
   if(bWaitOnCrash){
     DBGOE(ss.str()); //granting it will be readable
-    std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
+    int i=std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
   }
 
   exit(iSig); //1 or something else to just identify it was handled?

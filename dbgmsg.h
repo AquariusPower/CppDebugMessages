@@ -81,6 +81,7 @@
           static void SigHndlr(int iSig);
           static char**            getCurrentStackTrace  (bool bShowNow, int& riTot);
           static std::stringstream getCurrentStackTraceSS(bool bShowNow, bool bLog );
+          static void DemangledPStackTrace(bool bShowNow, bool bLog);
         #endif
       private:
         #ifdef UNIX
