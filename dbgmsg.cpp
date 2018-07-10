@@ -171,7 +171,7 @@ char** dbgmsg::getCurrentStackTrace(bool bShowNow,int& riTot){
   return backtrace_symbols(paStkBuff,riTot);;
 }
 
-void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog)
+void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog) //TODO opt: show log
 { //TODO collect per line to log properly TODO use ALSO the stack collected not thru pstack
   std::ostringstream osStkCmd;
   osStkCmd<<"pstack "<<iPid<<" |c++filt";
@@ -179,13 +179,10 @@ void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog)
   if(pipeFile!=NULL){
     const int i=10*1024;
     char buf[i];
-    if(fread(buf,1,i,pipeFile)>0){
-      DBGOE("DemangledStackTrace:\n"<<buf);
-      std::stringstream ss;ss<<"DemangledStackTrace:\n"<<buf;
-      if(bLog)addDbgMsgLog(ss);
-    }
+    if(fread(buf,1,i,pipeFile)>0)
+      DBGOEL("DemangledStackTrace:\n"<<buf);
   }else{
-    DBGOE("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
+    DBGOEL("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
   }
 }
 
@@ -366,7 +363,23 @@ void dbgmsg::initStream(){DBGLNSELF;
 #define SYNCHRONIZED(mutexVar) for(std::unique_lock<std::recursive_mutex> ulk(mutexVar); ulk; ulk.unlock())
 std::recursive_mutex mtxAddMsg;
 std::thread::id otherAddMsgThreadId;
-void dbgmsg::addDbgMsgLog(std::stringstream& ss){
+void dbgmsg::addDbgMsgLog(std::stringstream& ss)
+{
+  /**
+   * easify multilines
+   */
+  std::string strPart;
+  while(std::getline(ss, strPart)) {
+    while(strPart[strPart.size()-1]=='\n'){
+      if(strPart.size()==1)return;//ignore empty (multi)lines
+      strPart=strPart.substr(0,strPart.size()-1);
+    }
+    std::stringstream ssL;ssL<<strPart;
+    addDbgMsgLogLine(ssL);
+  }
+}
+void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
+{
   SYNCHRONIZED(mtxAddMsg){
     LazyConstructor();
 

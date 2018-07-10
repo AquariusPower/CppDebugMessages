@@ -55,6 +55,11 @@
         std::cerr.flush();std::cerr.clear();   \
         std::cerr<<"DBGMSG:cerr:"<<s<<std::endl; \
       };
+    #define DBGOEL(s) { \
+      DBGOE(s); \
+      std::stringstream ssDBGOEL;ssDBGOEL<<s; \
+      addDbgMsgLog(ssDBGOEL); \
+    };
 
     class dbgmsg{
       public:
@@ -69,6 +74,7 @@
         static std::string str(const char* c,const char* cId=NULL);
         static void addDbgMsgLogTmp();
         static void addDbgMsgLog(std::stringstream& ss);
+        static void addDbgMsgLogLine(std::stringstream& ssL);
         static void SetDebugLogPath(const char* c);
         static void SetAllowPidOnLogName(){bPidAllowed=true;}
         static void SetWaitOnCrash(bool b){bWaitOnCrash=b;}
