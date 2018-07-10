@@ -190,6 +190,8 @@ void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog)
 }
 
 std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
+  DemangledPStackTrace(bShowNow,bLog);
+
   int iTot=0;
   char** paBtSymb = getCurrentStackTrace(bShowNow,iTot);
 
