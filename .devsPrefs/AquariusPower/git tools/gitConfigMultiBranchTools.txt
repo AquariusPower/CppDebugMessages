@@ -21,5 +21,4 @@
 [alias]
   SBKPdiff =        "!f() { strFile="$1"; meld "${strFile%.sbkp}" "${strFile}"; }; f"
   SBKPcreatePatch = "!f() { strFile="$1"; diff -Naru "./${strFile%.sbkp}" "./${strFile}" >"./${strFile%.sbkp}.patch"; }; f"
-  SBKPapplyPatch =  "!f() { strFile="$1"; patch -p1 <"./${strFile%.sbkp}.patch"; }; f"
-
+  SBKPapplyPatch =  "!f() { strFile="$1"; patch --merge -p1 <"./${strFile%.sbkp}.patch"; }; f"

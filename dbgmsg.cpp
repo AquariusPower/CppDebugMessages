@@ -116,30 +116,11 @@ void dbgmsg::LazyConstructor(){
   DBGOE(DBGFLF<<":DBGMSG:Out");
 }
 
-//bool& dbgmsg::bInitCompleted(){ // had to be a pointer, would not initialize causing segfault... TODO why?
-//  if(pbInitCompleted==NULL)pbInitCompleted=new bool(false);
-//  return (*pbInitCompleted);
-//}
-//std::stringstream& dbgmsg::ssDbgMsgPath(){ // had to be a pointer, would not initialize causing segfault... TODO why?
-//  if(pssDbgMsgPath==NULL)pssDbgMsgPath=new std::stringstream();
-//  return (*pssDbgMsgPath);
-//}
-//std::stringstream& dbgmsg::ssDbgMsgFileName(){ // had to be a pointer, would not initialize causing segfault... TODO why?
-//  if(pssDbgMsgFileName==NULL)pssDbgMsgFileName=new std::stringstream();
-//  return (*pssDbgMsgFileName);
-//}
-//std::stringstream& dbgmsg::ssDbgMsgFileNameCrash(){ // had to be a pointer, would not initialize causing segfault... TODO why?
-//  if(pssDbgMsgFileNameCrash==NULL)pssDbgMsgFileNameCrash=new std::stringstream();
-//  return (*pssDbgMsgFileNameCrash);
-//}
-//std::ofstream& dbgmsg::fldDbgMsg(){ // had to be a pointer, would not initialize causing segfault... TODO why?
-//  if(pfldDbgMsg==NULL)pfldDbgMsg=new std::ofstream();
-//  return (*pfldDbgMsg);
-//}
-
 void dbgmsg::SetDebugLogPath(const char* c){
   if(!ssDbgMsgPath.str().empty()){
-    DBGOE("DBGMSG: path already set to '"<<ssDbgMsgPath.str()<<"', asked now '"<<c<<"'");
+    if(ssDbgMsgPath.str()==c)
+      return;
+    DBGOE("DBGMSG: will not change path that is already set to '"<<ssDbgMsgPath.str()<<"', asked now '"<<c<<"'");
     return;
   }
 
@@ -475,6 +456,19 @@ void dbgmsg::addDbgMsgLogTmp(){
   }
   ssDbgMsgTmp.str(std::string()); //empty it from "test" now
 
+  ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
+
+
+
+
+  //////////////////////////////////////////////////////////////////
+  //TODO remove below here, just checking if it is really working...
+  ssDbgMsgTmp<<"test";
+  if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
+    DBGOEL("!!!!!!!!!!!!!! unable to fix the stream !!!!!!!!!!!!!!");
+    exit(1);
+  }
+  ssDbgMsgTmp.str(std::string()); //empty it from "test" now
   ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
 }
 
