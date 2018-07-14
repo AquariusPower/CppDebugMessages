@@ -151,7 +151,7 @@ void dbgmsg::SetDebugLogPath(const char* c){
   }
 }
 
-int iBufSize=256; //TODO 1024? whatsa good value?
+int iBufSize=1024*10; //TODO 1024? whatsa good value?
 /**
  * return value needs to be free()
  */
