@@ -58,7 +58,8 @@
 #define stat _stat
 #endif
 
-#define DBGLNSELF {if(!bInitCompleted){ DBGOE(DBGFLF); }};
+#define DBGLNSELF {DBGOE(DBGFLF);};
+#define DBGLNSELFB4INIT {if(!dbgmsg::bInitCompleted){ DBGLNSELF; }};
 
 bool dbgmsg::bInitCompleted;
 
@@ -90,24 +91,24 @@ void dbgmsg::LazyConstructor(){
 
   DBGOE(DBGFLF<<":DBGMSG:In");
 
-  bInitCompleted=false;DBGLNSELF; //FIRST!
+  bInitCompleted=false;DBGLNSELFB4INIT; //FIRST!
 
-  ssDbgMsgPartTmp.clear();DBGLNSELF; //just to init
-  ssDbgMsgTmp.clear();DBGLNSELF; //just to init
-  vLastDbgMsgs.clear();DBGLNSELF;DBGOE(vLastDbgMsgs.size()) //just to init
-  fldDbgMsg.is_open();DBGLNSELF; //just to init
-  ssDbgMsgFileName.clear();DBGLNSELF; //just to init
-  bWaitOnCrash=false;DBGLNSELF;
-  bPrependDtTm=true;DBGLNSELF;
-  bPrependDbgmsgId=true;DBGLNSELF;
-  ssDbgMsgFileNameCrash.clear();DBGLNSELF; //just to init
-  ssDbgMsgPath.clear();DBGLNSELF; //just to init
-  bPidAllowed=false;DBGLNSELF;
-  iPid=0;DBGLNSELF;
-  llDbgmsgId=0;DBGLNSELF;
-  iMaxLinesInDebugFile = 100000;DBGLNSELF;
-  iMaxCrashLinesInMemory = 1000;DBGLNSELF;
-  bAddingLog=false;DBGLNSELF;DBGOE(bAddingLog);
+  ssDbgMsgPartTmp.clear();DBGLNSELFB4INIT; //just to init
+  ssDbgMsgTmp.clear();DBGLNSELFB4INIT; //just to init
+  vLastDbgMsgs.clear();DBGLNSELFB4INIT;DBGOE(vLastDbgMsgs.size()) //just to init
+  fldDbgMsg.is_open();DBGLNSELFB4INIT; //just to init
+  ssDbgMsgFileName.clear();DBGLNSELFB4INIT; //just to init
+  bWaitOnCrash=false;DBGLNSELFB4INIT;
+  bPrependDtTm=true;DBGLNSELFB4INIT;
+  bPrependDbgmsgId=true;DBGLNSELFB4INIT;
+  ssDbgMsgFileNameCrash.clear();DBGLNSELFB4INIT; //just to init
+  ssDbgMsgPath.clear();DBGLNSELFB4INIT; //just to init
+  bPidAllowed=false;DBGLNSELFB4INIT;
+  iPid=0;DBGLNSELFB4INIT;
+  llDbgmsgId=0;DBGLNSELFB4INIT;
+  iMaxLinesInDebugFile = 100000;DBGLNSELFB4INIT;
+  iMaxCrashLinesInMemory = 1000;DBGLNSELFB4INIT;
+  bAddingLog=false;DBGLNSELFB4INIT;DBGOE(bAddingLog);
 
   getCurrentStackTraceSS(true,false);
 
@@ -164,6 +165,34 @@ void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog) //TODO opt: show log
       DBGOEL("DemangledStackTrace:\n"<<buf);
   }else{
     DBGOEL("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
+  }
+}
+
+long dbgmsg::debuggerPid(){DBGLNSELF;
+  std::ostringstream osStkCmd;DBGLNSELF;
+  osStkCmd<<"cat /proc/"<<dbgmsg::iPid<<"/status |grep TracerPid |egrep \"[[:digit:]]*\" -o";DBGLNSELF; //TODO is this broad enough?
+  FILE* pipeFile = popen(osStkCmd.str().c_str(),"r");DBGLNSELF;
+  if(pipeFile!=NULL){DBGLNSELF;
+    const int i=10*1024;DBGLNSELF;
+    char buf[i];DBGLNSELF;
+    if(fread(buf,1,i,pipeFile)>0){DBGOEL(buf);DBGOEL(atol(buf));
+      return atol(buf);
+    }
+  }else{
+    DBGOEL("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
+  }
+
+  DBGLNSELF;
+  return 0;
+}
+
+void dbgmsg::breakPointSimulator(){DBGLNSELF;
+  if(debuggerPid()!=0){DBGLNSELF;
+    bool b=true;
+    if(b){DBGLNSELF; //if possible, set to false AT THE DEBUGGER to continue
+      DBGOEL("Simulating a breakpoint.");
+      int* i=NULL;(*i)++;
+    }
   }
 }
 
@@ -262,83 +291,83 @@ void dbgmsg::SigHndlr(int iSig)
   exit(iSig); //1 or something else to just identify it was handled?
 }
 
-void dbgmsg::init(){DBGLNSELF;
+void dbgmsg::init(){DBGLNSELFB4INIT;
   LazyConstructor();
 
   #ifdef UNIX
-    initSignals();DBGLNSELF;
+    initSignals();DBGLNSELFB4INIT;
   #endif
 
-  initStream();DBGLNSELF;
+  initStream();DBGLNSELFB4INIT;
 
-  getCurrentStackTraceSS(true,false);DBGLNSELF;
-//  std::stringstream ss;ss<<"DBGMSG INIT COMPLETED!";DBGLNSELF;
-//  addDbgMsgLog(ss);DBGLNSELF;
-  DBGOE("DBGMSG INIT COMPLETED!");DBGLNSELF;
+  getCurrentStackTraceSS(true,false);DBGLNSELFB4INIT;
+//  std::stringstream ss;ss<<"DBGMSG INIT COMPLETED!";DBGLNSELFB4INIT;
+//  addDbgMsgLog(ss);DBGLNSELFB4INIT;
+  DBGOE("DBGMSG INIT COMPLETED!");DBGLNSELFB4INIT;
 
-  bInitCompleted=true;DBGLNSELF;
+  bInitCompleted=true;DBGLNSELFB4INIT;
 }
 
 #ifdef UNIX
-void dbgmsg::initSignals(){DBGLNSELF;
+void dbgmsg::initSignals(){DBGLNSELFB4INIT;
   // as specified at `info signal`
   //TODO determine if these handlers are already set (unless it will just add the handler)
-  signal(SIGHUP , dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGINT , dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGQUIT, dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGILL , dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGABRT, dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGFPE , dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGKILL, dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGSEGV, dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGPIPE, dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGTERM, dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGBUS , dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGSYS , dbgmsg::SigHndlr);DBGLNSELF;
-  signal(SIGTRAP, dbgmsg::SigHndlr);DBGLNSELF;
+  signal(SIGHUP , dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGINT , dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGQUIT, dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGILL , dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGABRT, dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGFPE , dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGKILL, dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGSEGV, dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGPIPE, dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGTERM, dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGBUS , dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGSYS , dbgmsg::SigHndlr);DBGLNSELFB4INIT;
+  signal(SIGTRAP, dbgmsg::SigHndlr);DBGLNSELFB4INIT;
   //? SIGXFSZ
 }
 #endif
 
-void dbgmsg::initStream(){DBGLNSELF;
-  ssDbgMsgPath<<"";DBGLNSELF;
+void dbgmsg::initStream(){DBGLNSELFB4INIT;
+  ssDbgMsgPath<<"";DBGLNSELFB4INIT;
 
   // path
 #ifdef UNIX
-  if(ssDbgMsgPath.str().empty()){DBGLNSELF;
-    ssDbgMsgPath<<getenv("HOME")<<"/";DBGLNSELF;
-  }DBGLNSELF;
+  if(ssDbgMsgPath.str().empty()){DBGLNSELFB4INIT;
+    ssDbgMsgPath<<getenv("HOME")<<"/";DBGLNSELFB4INIT;
+  }DBGLNSELFB4INIT;
 #endif
 
-  if(!ssDbgMsgPath.str().empty()){DBGLNSELF;
-    ssDbgMsgFileName<<ssDbgMsgPath.str()<<"/";DBGLNSELF;
-  }else{DBGLNSELF;
-    ssDbgMsgFileName<<"./";DBGLNSELF; //will be relative to current execution path
-  }DBGLNSELF;
+  if(!ssDbgMsgPath.str().empty()){DBGLNSELFB4INIT;
+    ssDbgMsgFileName<<ssDbgMsgPath.str()<<"/";DBGLNSELFB4INIT;
+  }else{DBGLNSELFB4INIT;
+    ssDbgMsgFileName<<"./";DBGLNSELFB4INIT; //will be relative to current execution path
+  }DBGLNSELFB4INIT;
 
   // filename
 #ifdef __USE_GNU
-  char* c=program_invocation_short_name;DBGLNSELF; //auto "guess work" that should work fine
-  if(c!=NULL){DBGLNSELF;
-    ssDbgMsgFileName<<"."<<c;DBGLNSELF;
-  }DBGLNSELF;
+  char* c=program_invocation_short_name;DBGLNSELFB4INIT; //auto "guess work" that should work fine
+  if(c!=NULL){DBGLNSELFB4INIT;
+    ssDbgMsgFileName<<"."<<c;DBGLNSELFB4INIT;
+  }DBGLNSELFB4INIT;
 #endif
 
   //TODO add date/time on filename
-  iPid=::getpid();DBGLNSELF;
-  if(bPidAllowed){DBGLNSELF;
-    ssDbgMsgFileName<<".pid"<<iPid;DBGLNSELF;
-  }DBGLNSELF;
+  iPid=::getpid();DBGLNSELFB4INIT;
+  if(bPidAllowed){DBGLNSELFB4INIT;
+    ssDbgMsgFileName<<".pid"<<iPid;DBGLNSELFB4INIT;
+  }DBGLNSELFB4INIT;
 
-  ssDbgMsgFileNameCrash<<ssDbgMsgFileName.str()<<".Crash";DBGLNSELF;
-  if(!bPidAllowed){DBGLNSELF;
-    ssDbgMsgFileNameCrash<<".pid"<<iPid;DBGLNSELF; //this will only be generated if it crashes
-  }DBGLNSELF;
+  ssDbgMsgFileNameCrash<<ssDbgMsgFileName.str()<<".Crash";DBGLNSELFB4INIT;
+  if(!bPidAllowed){DBGLNSELFB4INIT;
+    ssDbgMsgFileNameCrash<<".pid"<<iPid;DBGLNSELFB4INIT; //this will only be generated if it crashes
+  }DBGLNSELFB4INIT;
 
-  ssDbgMsgFileNameCrash<<".dbgmsg.log";DBGLNSELF; //suffix
-  ssDbgMsgFileName     <<".dbgmsg.log";DBGLNSELF; //suffix
+  ssDbgMsgFileNameCrash<<".dbgmsg.log";DBGLNSELFB4INIT; //suffix
+  ssDbgMsgFileName     <<".dbgmsg.log";DBGLNSELFB4INIT; //suffix
 
-  DBGOE(ssDbgMsgFileName.str());DBGLNSELF;
+  DBGOE(ssDbgMsgFileName.str());DBGLNSELFB4INIT;
 }
 
 #define SYNCHRONIZED(mutexVar) for(std::unique_lock<std::recursive_mutex> ulk(mutexVar); ulk; ulk.unlock())
@@ -381,19 +410,19 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
 
     otherAddMsgThreadId=std::this_thread::get_id();
 
-    //keep this //std::ostream& o=std::cout;DBGLNSELF; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
+    //keep this //std::ostream& o=std::cout;DBGLNSELFB4INIT; //keep for self debug if needed (beware to not send NULL to it or that output will break!!!)
 
-    if(ssDbgMsgFileName.str().empty()){DBGLNSELF;
-      init();DBGLNSELF;
-    }DBGLNSELF;
+    if(ssDbgMsgFileName.str().empty()){DBGLNSELFB4INIT;
+      init();DBGLNSELFB4INIT;
+    }DBGLNSELFB4INIT;
 
-    if(!fldDbgMsg.is_open()){DBGLNSELF;
-      fldDbgMsg.open(ssDbgMsgFileName.str());DBGLNSELF;
-    }DBGLNSELF;
+    if(!fldDbgMsg.is_open()){DBGLNSELFB4INIT;
+      fldDbgMsg.open(ssDbgMsgFileName.str());DBGLNSELFB4INIT;
+    }DBGLNSELFB4INIT;
 
-    std::stringstream ssDump;DBGLNSELF;
+    std::stringstream ssDump;DBGLNSELFB4INIT;
 
-    if(bPrependDtTm){DBGLNSELF;
+    if(bPrependDtTm){DBGLNSELFB4INIT;
       static int iTmSz=100;
       char cTime[iTmSz];
       time_t rawtime;
@@ -401,42 +430,42 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
       strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));
     //  strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&(attr.st_mtime)));
       ssDump<<cTime;
-    }DBGLNSELF;
+    }DBGLNSELFB4INIT;
 
-    if(bPrependDbgmsgId){DBGLNSELF;
+    if(bPrependDbgmsgId){DBGLNSELFB4INIT;
       ssDump<<"("<<llDbgmsgId<<")";
-    }DBGLNSELF;
+    }DBGLNSELFB4INIT;
 
-    ssDump<<" "<<ss.str();DBGLNSELF;
+    ssDump<<" "<<ss.str();DBGLNSELFB4INIT;
 
-    vLastDbgMsgs.push_back(ssDump.str());DBGLNSELF;
+    vLastDbgMsgs.push_back(ssDump.str());DBGLNSELFB4INIT;
     if(vLastDbgMsgs.size()>100) //fail safe TODO iMaxCrashLinesInMemory may be not initialized?
       while(vLastDbgMsgs.size()>iMaxCrashLinesInMemory){
         vLastDbgMsgs.erase(vLastDbgMsgs.begin());
-    }DBGLNSELF;
+    }DBGLNSELFB4INIT;
 
   //  fldDbgMsg<<" d"<<(llDbgmsgId++)<<" @ "<<ss.str()<<std::endl;
-  //  fldDbgMsg()<<" ";DBGLNSELF;fldDbgMsg()<<ssDump.str();DBGLNSELF;fldDbgMsg()<<std::endl;DBGLNSELF;
-    fldDbgMsg<<" "<<ssDump.str()<<std::endl;DBGLNSELF;
-    fldDbgMsg.flush();DBGLNSELF; //TODO unnecessary?
+  //  fldDbgMsg()<<" ";DBGLNSELFB4INIT;fldDbgMsg()<<ssDump.str();DBGLNSELFB4INIT;fldDbgMsg()<<std::endl;DBGLNSELFB4INIT;
+    fldDbgMsg<<" "<<ssDump.str()<<std::endl;DBGLNSELFB4INIT;
+    fldDbgMsg.flush();DBGLNSELFB4INIT; //TODO unnecessary?
 
-    if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){DBGLNSELF; //TODO is it helping preventing high IO ?
-      std::stringstream ssOldFileName;DBGLNSELF;
-      ssOldFileName<<ssDbgMsgFileName.str()<<".old";DBGLNSELF;
+    if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){DBGLNSELFB4INIT; //TODO is it helping preventing high IO ?
+      std::stringstream ssOldFileName;DBGLNSELFB4INIT;
+      ssOldFileName<<ssDbgMsgFileName.str()<<".old";DBGLNSELFB4INIT;
 
   //    std::stringstream ssTmp;
   //    ssTmp<<" [removing old debug file "<<ssOldFileName.str()<<"]";
   //    std::cerr<<ssTmp.str()<<std::endl;
   //    fldDbgMsg<<ssTmp.str()<<std::endl;
-      std::remove(ssOldFileName.str().c_str());DBGLNSELF; //clean older b4 renaming
+      std::remove(ssOldFileName.str().c_str());DBGLNSELFB4INIT; //clean older b4 renaming
 
   //    ssTmp<<" [renaming this debug file to "<<ssOldFileName.str()<<"]";
   //    std::cerr<<ssTmp.str()<<std::endl;
   //    fldDbgMsg<<ssTmp.str()<<std::endl;
-      fldDbgMsg.close();DBGLNSELF;
+      fldDbgMsg.close();DBGLNSELFB4INIT;
 
-      std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());DBGLNSELF;
-    }DBGLNSELF;
+      std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());DBGLNSELFB4INIT;
+    }DBGLNSELFB4INIT;
 
     llDbgmsgId++; //prepare next id
 

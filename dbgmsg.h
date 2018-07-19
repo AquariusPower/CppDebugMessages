@@ -58,7 +58,7 @@
     #define DBGOEL(s) { \
       DBGOE(s); \
       std::stringstream ssDBGOEL;ssDBGOEL<<s; \
-      addDbgMsgLog(ssDBGOEL); \
+      dbgmsg::addDbgMsgLog(ssDBGOEL); \
     };
 
     class dbgmsg{
@@ -88,6 +88,8 @@
           static char**            getCurrentStackTrace  (bool bShowNow, int& riTot);
           static std::stringstream getCurrentStackTraceSS(bool bShowNow, bool bLog );
           static void DemangledPStackTrace(bool bShowNow, bool bLog);
+          static void breakPointSimulator();
+          static long debuggerPid();
         #endif
       private:
         #ifdef UNIX
@@ -162,6 +164,7 @@
 
     #ifdef UNIX
       #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
+      #define DBGBREAKPOINT {dbgmsg::breakPointSimulator();}
     #endif
 
   #endif //DBGMSG
