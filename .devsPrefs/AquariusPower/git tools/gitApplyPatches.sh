@@ -8,6 +8,9 @@ function FUNCSBKPapplyPatch() {
   strFile="${strSBKP%.sbkp}"
   strPatch="${strFile}.patch"
   if ! patch --merge -p1 <"./$strPatch";then
+    sed -i -r 's"^<<<<<<<$"  <<<<<<< HEAD"' "$strFile"
+    sed -i -r 's"^=======$"  ======="' "$strFile"
+    sed -i -r 's"^>>>>>>>$"  >>>>>>> Other"' "$strFile"
     meld "$strFile" #TODO let conflicts be found when hitting Ctrl+K
   fi
 };export -f FUNCSBKPapplyPatch; 
