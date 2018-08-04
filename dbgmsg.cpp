@@ -163,6 +163,7 @@ void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog) //TODO opt: show log
     char buf[i];
     if(fread(buf,1,i,pipeFile)>0)
       DBGOEL("DemangledStackTrace:\n"<<buf);
+    pclose(pipeFile);
   }else{
     DBGOEL("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
   }
@@ -173,7 +174,7 @@ long dbgmsg::debuggerPid(){DBGLNSELF;
   osStkCmd<<"cat /proc/"<<dbgmsg::iPid<<"/status |grep TracerPid |egrep \"[[:digit:]]*\" -o";DBGLNSELF; //TODO is this broad enough?
   FILE* pipeFile = popen(osStkCmd.str().c_str(),"r");DBGLNSELF;
   if(pipeFile!=NULL){DBGLNSELF;
-    const int i=10*1024;DBGLNSELF;
+    static const int i=10*1024;DBGLNSELF;
     char buf[i];DBGLNSELF;
     if(fread(buf,1,i,pipeFile)>0){DBGOEL(buf);DBGOEL(atol(buf));
       return atol(buf);
