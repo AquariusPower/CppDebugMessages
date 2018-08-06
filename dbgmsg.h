@@ -83,19 +83,7 @@
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
         static bool IsInitialized(){return bInitCompleted;}
         ~dbgmsg(){DBGOE("DBGMSG:destructor"); if(fldDbgMsg.is_open())fldDbgMsg.close(); } //TODO never run?
-        #ifdef UNIX
-          static void SigHndlr(int iSig);
-          static char**            getCurrentStackTrace  (bool bShowNow, int& riTot);
-          static std::stringstream getCurrentStackTraceSS(bool bShowNow, bool bLog );
-          static void DemangledPStackTrace(bool bShowNow, bool bLog);
-          static void breakPointSimulator();
-          static long debuggerPid();
-        #endif
       private:
-        #ifdef UNIX
-          static void initSignals();
-        #endif
-
         static void init();
         static void initStream();
         static std::string id(const char* cId);
@@ -121,6 +109,19 @@
         static std::vector<std::string> vLastDbgMsgs;
         static bool bPrependDtTm;
         static bool bPrependDbgmsgId;
+
+      #ifdef UNIX //keep same order of cpp file w/e
+      public:
+        static void SigHndlr(int iSig);
+        static std::stringstream dbgPOpen(std::string cmd,bool bEchoCmd=true);
+        static char**            getCurrentStackTrace  (bool bShowNow, int& riTot);
+        static std::stringstream DemangledPStackTrace(bool bShowNow, bool bLog, std::stringstream& ss);
+        static long debuggerPid();
+        static void breakPointSimulator();
+        static std::stringstream getCurrentStackTraceSS(bool bShowNow, bool bLog );
+      private:
+        static void initSignals();
+      #endif
     };
 
     #define DBGCTSV(ex) "{"<<DBGTOSTR(ex)<<"}=\""<<(ex)<<"\";" //DBG "code to string" and value
@@ -163,7 +164,7 @@
     #define DBGEXEC(cmds) {if(dbgmsg::IsInitialized()){cmds;}} //this helps a lot by avoiding #ifdef for DBGMSG
 
     #ifdef UNIX
-      #define DBGSTK DBGSS("DBGMSG:ShowCurrentStackTrace:"<<std::endl<<dbgmsg::getCurrentStackTraceSS(true,true).str()<<std::endl)
+      #define DBGSTK {DBGSS("DBGMSG:ShowCurrentStackTrace:");dbgmsg::getCurrentStackTraceSS(true,true);}
       #define DBGBREAKPOINT {dbgmsg::breakPointSimulator();}
     #endif
 

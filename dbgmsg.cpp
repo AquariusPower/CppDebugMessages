@@ -110,9 +110,13 @@ void dbgmsg::LazyConstructor(){
   iMaxCrashLinesInMemory = 1000;DBGLNSELFB4INIT;
   bAddingLog=false;DBGLNSELFB4INIT;DBGOE(bAddingLog);
 
-  getCurrentStackTraceSS(true,false);
-
   llDesperateInternalInitRandomKey=39854029834543289LL;
+
+  /**
+   * CALLS ONLY AFTER llDesperateInternalInitRandomKey is set !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   */
+
+  getCurrentStackTraceSS(true,false);
 
   DBGOE(DBGFLF<<":DBGMSG:Out");
 }
@@ -131,92 +135,6 @@ void dbgmsg::SetDebugLogPath(const char* c){
     ssDbgMsgPath<<c;
     DBGOE("DBGMSG: set path: "<<ssDbgMsgPath.str());
   }
-}
-
-int iBufSize=1024*10; //TODO 1024? whatsa good value?
-/**
- * return value needs to be free()
- */
-char** dbgmsg::getCurrentStackTrace(bool bShowNow,int& riTot){
-  void* paStkBuff[iBufSize];
-  riTot = backtrace(paStkBuff, iBufSize); //get it
-
-  if(bShowNow){ // STDERR only
-    //for safety/failProof try, just directly show the details on term
-    //TODO try/catch?
-    std::cerr.flush();std::cerr.clear(); //fit it if needed
-    std::cerr<<"DBGMSG:CurrentStackTrace:Begin >>--->"<<std::endl;
-    backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);
-    std::cerr<<"DBGMSG:CurrentStackTrace:End   <---<<"<<std::endl;
-  }
-
-  return backtrace_symbols(paStkBuff,riTot);;
-}
-
-void dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog) //TODO opt: show log
-{ //TODO collect per line to log properly TODO use ALSO the stack collected not thru pstack
-  std::ostringstream osStkCmd;
-  osStkCmd<<"pstack "<<iPid<<" |c++filt";
-  FILE* pipeFile = popen(osStkCmd.str().c_str(),"r");
-  if(pipeFile!=NULL){
-    const int i=10*1024;
-    char buf[i];
-    if(fread(buf,1,i,pipeFile)>0)
-      DBGOEL("DemangledStackTrace:\n"<<buf);
-    pclose(pipeFile);
-  }else{
-    DBGOEL("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
-  }
-}
-
-long dbgmsg::debuggerPid(){DBGLNSELF;
-  std::ostringstream osStkCmd;DBGLNSELF;
-  osStkCmd<<"cat /proc/"<<dbgmsg::iPid<<"/status |grep TracerPid |egrep \"[[:digit:]]*\" -o";DBGLNSELF; //TODO is this broad enough?
-  FILE* pipeFile = popen(osStkCmd.str().c_str(),"r");DBGLNSELF;
-  if(pipeFile!=NULL){DBGLNSELF;
-    static const int i=10*1024;DBGLNSELF;
-    char buf[i];DBGLNSELF;
-    if(fread(buf,1,i,pipeFile)>0){DBGOEL(buf);DBGOEL(atol(buf));
-      return atol(buf);
-    }
-  }else{
-    DBGOEL("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
-  }
-
-  DBGLNSELF;
-  return 0;
-}
-
-void dbgmsg::breakPointSimulator(){DBGLNSELF;
-  if(debuggerPid()!=0){DBGLNSELF;
-    bool b=true;
-    if(b){DBGLNSELF; //if possible, set to false AT THE DEBUGGER to continue
-      DBGOEL("Simulating a breakpoint.");
-      int* i=NULL;(*i)++;
-    }
-  }
-}
-
-std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
-  DemangledPStackTrace(bShowNow,bLog);
-
-  int iTot=0;
-  char** paBtSymb = getCurrentStackTrace(bShowNow,iTot);
-
-  std::stringstream ss;
-  //  for(int i=0;i<iBufSize;i++){
-  for(int i=0;i<iTot;i++){
-    char* c=paBtSymb[i];
-    if(c==NULL)break;
-    std::stringstream ss2;ss2<<"\t"<<c;
-    if(bLog)addDbgMsgLog(ss2);
-    ss<<ss2.str()<<std::endl;
-  }
-  free(paBtSymb);
-
-//  if(bLog)addDbgMsgLog(ss);
-
-  return ss;
 }
 
 std::string dbgmsg::id(const char* cId){ //TODO not working... is duplicating the id...
@@ -251,45 +169,6 @@ std::string dbgmsg::str(const char* c,const char* cId){
   if(cId!=NULL)ssDbgMsgPartTmp<<cId<<"=";
   ssDbgMsgPartTmp<<"'"<<c<<"'";
   return ssDbgMsgPartTmp.str();
-}
-
-void dbgmsg::SigHndlr(int iSig)
-{
-  char* cSigName=strsignal(iSig);
-
-  //1st! make it promptly visible!
-  std::stringstream ssSig;ssSig<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'";
-  DBGOE(ssSig.str());
-
-  //store on log file
-  getCurrentStackTraceSS(true,true);
-
-  std::stringstream ss;ss<<"(hit ENTER to exit)";
-
-  if(bWaitOnCrash)addDbgMsgLog(ss);
-  addDbgMsgLog(ssSig);
-  fldDbgMsg.close(); //this does NOT prevents trunc...
-
-  std::ofstream fldDbgMsgCrash;
-  fldDbgMsgCrash.open(ssDbgMsgFileNameCrash.str());
-  long long llDbgmsgIdCrash = llDbgmsgId - iMaxCrashLinesInMemory;
-  if(llDbgmsgIdCrash<0)llDbgmsgIdCrash=0;
-  int iMaxCrashLines = 100;
-  if(vLastDbgMsgs.size()<iMaxCrashLines)iMaxCrashLines=vLastDbgMsgs.size();
-  for(int i=0;i<iMaxCrashLines;i++){
-//    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
-    fldDbgMsgCrash<<" "<<vLastDbgMsgs[i]<<std::endl;
-    fldDbgMsgCrash.flush(); //just to be sure
-  }
-  fldDbgMsgCrash.close();
-  DBGOE("CrashSaved: "<<ssDbgMsgFileNameCrash.str());
-
-  if(bWaitOnCrash){
-    DBGOE(ss.str()); //granting it will be readable
-    int i=std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
-  }
-
-  exit(iSig); //1 or something else to just identify it was handled?
 }
 
 void dbgmsg::init(){DBGLNSELFB4INIT;
@@ -402,8 +281,10 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
       DBGOE("Other thread id: "<<otherAddMsgThreadId);
       DBGOE("This  thread id: "<<std::this_thread::get_id());
 
-      getCurrentStackTraceSS(true,false);
       DBGOE("exiting now!!!");
+
+      getCurrentStackTraceSS(true,false);
+
       exit(1); //TODO not completely exiting... crash it?
     }
 
@@ -475,31 +356,202 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
   }
 }
 
+bool bAnnoyingNullInfo=false;
 void dbgmsg::addDbgMsgLogTmp(){
   addDbgMsgLog(ssDbgMsgTmp);
   ssDbgMsgTmp.str(std::string()); //empty it
 
-  // if there was a NULL, it will break the temp stream variable
-  ssDbgMsgTmp<<"test";
-  if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
-    fldDbgMsg<<" "<<"!!!!!!!!!!!! DbgMsg problem: some NULL went to the stream !!!!!!!!!!!!"<<std::endl;
+  if(bAnnoyingNullInfo){
+    // if there was a NULL, it will break the temp stream variable
+    ssDbgMsgTmp<<"test";
+    if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
+      fldDbgMsg<<" "<<"!!!!!!!!!!!! DbgMsg problem: some NULL went to the stream !!!!!!!!!!!!"<<std::endl;
+    }
+    ssDbgMsgTmp.str(std::string()); //empty it from "test" now
   }
-  ssDbgMsgTmp.str(std::string()); //empty it from "test" now
-
   ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
 
-
-
-
-  //////////////////////////////////////////////////////////////////
-  //TODO remove below here, just checking if it is really working...
-  ssDbgMsgTmp<<"test";
-  if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
-    DBGOEL("!!!!!!!!!!!!!! unable to fix the stream !!!!!!!!!!!!!!");
-    exit(1);
-  }
-  ssDbgMsgTmp.str(std::string()); //empty it from "test" now
-  ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
+//  //////////////////////////////////////////////////////////////////
+//  //TODO remove below here, just checking if it is really working...
+//  ssDbgMsgTmp<<"test";
+//  if(ssDbgMsgTmp.rdbuf()->in_avail()==0){
+//    DBGOEL("!!!!!!!!!!!!!! unable to fix the stream !!!!!!!!!!!!!!");
+//    exit(1);
+//  }
+//  ssDbgMsgTmp.str(std::string()); //empty it from "test" now
+//  ssDbgMsgTmp.clear(); //properly clear it (even clearing problems caused by passing NULL to it)
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+#ifdef UNIX
+  void dbgmsg::SigHndlr(int iSig)
+  {
+    char* cSigName=strsignal(iSig);
+
+    //1st! make it promptly visible!
+    std::stringstream ssSig;ssSig<<"DBGMSG:SIGNAL["<<iSig<<"]='"<<cSigName<<"'";
+    DBGOE(ssSig.str());
+
+    //store on log file
+    getCurrentStackTraceSS(true,true);
+
+    std::stringstream ss;ss<<"(hit ENTER to exit)";
+
+    if(bWaitOnCrash)addDbgMsgLog(ss);
+    addDbgMsgLog(ssSig);
+    fldDbgMsg.close(); //this does NOT prevents trunc...
+
+    std::ofstream fldDbgMsgCrash;
+    fldDbgMsgCrash.open(ssDbgMsgFileNameCrash.str());
+    long long llDbgmsgIdCrash = llDbgmsgId - iMaxCrashLinesInMemory;
+    if(llDbgmsgIdCrash<0)llDbgmsgIdCrash=0;
+    int iMaxCrashLines = 100;
+    if(vLastDbgMsgs.size()<iMaxCrashLines)iMaxCrashLines=vLastDbgMsgs.size();
+    for(int i=0;i<iMaxCrashLines;i++){
+  //    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
+      fldDbgMsgCrash<<" "<<vLastDbgMsgs[i]<<std::endl;
+      fldDbgMsgCrash.flush(); //just to be sure
+    }
+    fldDbgMsgCrash.close();
+    DBGOE("CrashSaved: "<<ssDbgMsgFileNameCrash.str());
+
+    if(bWaitOnCrash){
+      DBGOE(ss.str()); //granting it will be readable
+      int i=std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
+    }
+
+    exit(iSig); //1 or something else to just identify it was handled?
+  }
+
+  std::stringstream dbgmsg::dbgPOpen(std::string cmd,bool bEchoCmd)
+  {
+    std::stringstream ss;
+    std::ostringstream osStkCmd;
+    osStkCmd<<cmd;
+    if(bEchoCmd)
+      ss<<"popen():"<<osStkCmd.str()<<std::endl;
+    FILE* pipeFile = popen(osStkCmd.str().c_str(),"r");
+    if(pipeFile!=NULL){
+      const int i=10*1024;
+      char buf[i];
+      int j=fread(buf,1,i,pipeFile);
+      ss<<"fread():"<<j;
+      if(j>0)
+        ss<<(buf);
+      pclose(pipeFile);
+    }else{
+      ss<<"unable to execute popen() with cmd: "<<osStkCmd.str();
+    }
+
+    return ss;
+  }
+
+  int iBufSize=1024*10; //TODO 1024? whatsa good value?
+  /**
+   * return value needs to be free()
+   */
+  char** dbgmsg::getCurrentStackTrace(bool bShowNow,int& riTot){
+    void* paStkBuff[iBufSize];
+    riTot = backtrace(paStkBuff, iBufSize); //get it
+
+    if(bShowNow){ // STDERR only
+      //for safety/failProof try, just directly show the details on term
+      //TODO try/catch?
+      std::cerr.flush();std::cerr.clear(); //fit it if needed
+      std::cerr<<"DBGMSG:CurrentStackTrace:Begin >>--->"<<std::endl;
+      backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);
+      std::cerr<<"DBGMSG:CurrentStackTrace:End   <---<<"<<std::endl;
+    }
+
+    return backtrace_symbols(paStkBuff,riTot);;
+  }
+
+  /**
+   * TODO WIP (not working?)
+   */
+  std::stringstream dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog, std::stringstream& ssStk) //TODO opt: show log
+  { //TODO collect per line to log properly TODO use ALSO the stack collected not thru pstack
+    std::stringstream ssRet;
+
+    ssRet<<"DemangledStackTrace:";
+
+    {
+      std::stringstream ss;
+
+      ss<<"pstack "<<iPid;
+      ssRet<<dbgPOpen(ss.str()).str()<<std::endl;
+
+      ss<<" |c++filt";
+      ssRet<<dbgPOpen(ss.str()).str()<<std::endl;
+    }
+
+    {
+      std::stringstream ss;
+//      ss.str(std::string());
+//      ss.clear();
+      ss<<"echo '"<<ssStk.str()<<"' |c++filt";
+      ssRet<<"echo '...' |c++filt"<<std::endl;
+      ssRet<<dbgPOpen(ss.str(),false).str()<<std::endl;
+    }
+
+    if(bLog){
+      std::string line;
+      std::stringstream ss;
+      while(std::getline(ssRet,line,'\n')){
+        ss.str(std::string());ss.clear();
+        ss<<line;
+        addDbgMsgLog(ss);
+      }
+    }
+
+    return ssRet;
+  }
+
+  long dbgmsg::debuggerPid(){DBGLNSELF;
+    std::ostringstream osStkCmd;DBGLNSELF;
+    osStkCmd<<"cat /proc/"<<dbgmsg::iPid<<"/status |grep TracerPid |egrep \"[[:digit:]]*\" -o";DBGLNSELF; //TODO is this broad enough?
+    FILE* pipeFile = popen(osStkCmd.str().c_str(),"r");DBGLNSELF;
+    if(pipeFile!=NULL){DBGLNSELF;
+      static const int i=10*1024;DBGLNSELF;
+      char buf[i];DBGLNSELF;
+      if(fread(buf,1,i,pipeFile)>0){DBGOEL(buf);DBGOEL(atol(buf));
+        return atol(buf);
+      }
+    }else{
+      DBGOEL("unable to execute popen() with cmd: "<<osStkCmd.str().c_str());
+    }
+
+    DBGLNSELF;
+    return 0;
+  }
+
+  void dbgmsg::breakPointSimulator(){DBGLNSELF;
+    if(debuggerPid()!=0){DBGLNSELF;
+      bool b=true;
+      if(b){DBGLNSELF; //if possible, set to false AT THE DEBUGGER to continue
+        DBGOEL("Simulating a breakpoint.");
+        int* i=NULL;(*i)++;
+      }
+    }
+  }
+
+  std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
+    int iTot=0;
+    char** paBtSymb = getCurrentStackTrace(bShowNow,iTot);
+
+    std::stringstream ssStk;
+    //  for(int i=0;i<iBufSize;i++){
+    for(int i=0;i<iTot;i++){
+      char* c=paBtSymb[i];
+      if(c==NULL)break;
+      std::stringstream ss;ss<<"\t"<<c;
+      if(bLog)addDbgMsgLog(ss);
+      ssStk<<ss.str()<<std::endl;
+    }
+    free(paBtSymb);
+
+    return DemangledPStackTrace(bShowNow,bLog,ssStk);
+  }
 #endif
+
+#endif //DBGMSG
