@@ -478,7 +478,7 @@ void dbgmsg::addDbgMsgLogTmp(){
     {
       std::stringstream ss;
 
-      ss<<"pstack "<<iPid;
+      ss<<"pstack "<<iPid; //TODO sometimes pstack will not return freezing the application, just use the stack collected from here instead!
       ssRet<<dbgPOpen(ss.str()).str()<<std::endl;
 
       ss<<" |c++filt";
