@@ -48,7 +48,11 @@
 
     // It would force std on everything... do not use! //using namespace std;
 
-    /* tries to make it sure both streams will work always even if they got broken by NULL! */
+    /**
+     * tries to make it sure both streams will work always even if they got broken by NULL! 
+     * this also helps against some freezes when trying to write to stderr if it is not working by 
+     * some other reason...
+     */
     #define DBGOE(s) { \
         std::cout.flush();std::cout.clear();   \
         std::cout<<"DBGMSG:cout:"<<s<<std::endl; \

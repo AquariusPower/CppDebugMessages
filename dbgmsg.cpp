@@ -335,15 +335,8 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
       std::stringstream ssOldFileName;DBGLNSELFB4INIT;
       ssOldFileName<<ssDbgMsgFileName.str()<<".old";DBGLNSELFB4INIT;
 
-  //    std::stringstream ssTmp;
-  //    ssTmp<<" [removing old debug file "<<ssOldFileName.str()<<"]";
-  //    std::cerr<<ssTmp.str()<<std::endl;
-  //    fldDbgMsg<<ssTmp.str()<<std::endl;
       std::remove(ssOldFileName.str().c_str());DBGLNSELFB4INIT; //clean older b4 renaming
 
-  //    ssTmp<<" [renaming this debug file to "<<ssOldFileName.str()<<"]";
-  //    std::cerr<<ssTmp.str()<<std::endl;
-  //    fldDbgMsg<<ssTmp.str()<<std::endl;
       fldDbgMsg.close();DBGLNSELFB4INIT;
 
       std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());DBGLNSELFB4INIT;
@@ -454,13 +447,12 @@ void dbgmsg::addDbgMsgLogTmp(){
     void* paStkBuff[iBufSize];
     riTot = backtrace(paStkBuff, iBufSize); //get it
 
-    if(bShowNow){ // STDERR only
+    if(bShowNow){
       //for safety/failProof try, just directly show the details on term
-      //TODO try/catch?
-      std::cerr.flush();std::cerr.clear(); //fit it if needed
-      std::cerr<<"DBGMSG:CurrentStackTrace:Begin >>--->"<<std::endl;
+      DBGOE("DBGMSG:CurrentStackTrace:Begin >>--->");
+      backtrace_symbols_fd(paStkBuff,riTot,STDOUT_FILENO);
       backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);
-      std::cerr<<"DBGMSG:CurrentStackTrace:End   <---<<"<<std::endl;
+      DBGOE("DBGMSG:CurrentStackTrace:End   <---<<");
     }
 
     return backtrace_symbols(paStkBuff,riTot);;
