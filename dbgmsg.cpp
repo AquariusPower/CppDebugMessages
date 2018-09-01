@@ -470,27 +470,32 @@ void dbgmsg::addDbgMsgLogTmp(){
    * TODO WIP (not working?)
    */
   std::stringstream dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog, std::stringstream& ssStk) //TODO opt: show log
-  { //TODO collect per line to log properly TODO use ALSO the stack collected not thru pstack
+  {
     std::stringstream ssRet;
 
     ssRet<<"DemangledStackTrace:";
-
+    
+    /**
+     * TODO 
+     * sometimes pstack will not return freezing the application, just use the stack collected from here instead!
+     * pstack is not working anyway...
     {
       std::stringstream ss;
 
-      ss<<"pstack "<<iPid; //TODO sometimes pstack will not return freezing the application, just use the stack collected from here instead!
+      ss<<"pstack "<<iPid; 
       ssRet<<dbgPOpen(ss.str()).str()<<std::endl;
 
       ss<<" |c++filt";
       ssRet<<dbgPOpen(ss.str()).str()<<std::endl;
     }
+     */
 
     {
       std::stringstream ss;
 //      ss.str(std::string());
 //      ss.clear();
+      ssRet<<"echo '...' |c++filt"<<std::endl; //just a short info about what will be done
       ss<<"echo '"<<ssStk.str()<<"' |c++filt";
-      ssRet<<"echo '...' |c++filt"<<std::endl;
       ssRet<<dbgPOpen(ss.str(),false).str()<<std::endl;
     }
 
