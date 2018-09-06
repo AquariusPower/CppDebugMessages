@@ -439,25 +439,6 @@ void dbgmsg::addDbgMsgLogTmp(){
     return ss;
   }
 
-  int iBufSize=1024*10; //TODO 1024? whatsa good value?
-  /**
-   * return value needs to be free()
-   */
-  char** dbgmsg::getCurrentStackTrace(bool bShowNow,int& riTot){
-    void* paStkBuff[iBufSize];
-    riTot = backtrace(paStkBuff, iBufSize); //get it
-
-    if(bShowNow){
-      //for safety/failProof try, just directly show the details on term
-      DBGOE("DBGMSG:CurrentStackTrace:Begin >>--->");
-      backtrace_symbols_fd(paStkBuff,riTot,STDOUT_FILENO);
-      backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);
-      DBGOE("DBGMSG:CurrentStackTrace:End   <---<<");
-    }
-
-    return backtrace_symbols(paStkBuff,riTot);;
-  }
-
   /**
    * TODO WIP (not working?)
    */
@@ -532,18 +513,38 @@ void dbgmsg::addDbgMsgLogTmp(){
     }
   }
 
+  int iBufSize=1024*10; //TODO 1024? whatsa good value?
   std::stringstream dbgmsg::getCurrentStackTraceSS(bool bShowNow, bool bLog){
-    int iTot=0;
-    char** paBtSymb = getCurrentStackTrace(bShowNow,iTot);
+    void* paStkBuff[iBufSize];
+    int iTot = backtrace(paStkBuff, iBufSize); //get it
+    char** paBtSymb = backtrace_symbols(paStkBuff,iTot);
 
     std::stringstream ssStk;
-    //  for(int i=0;i<iBufSize;i++){
-    for(int i=0;i<iTot;i++){
-      char* c=paBtSymb[i];
-      if(c==NULL)break;
-      std::stringstream ss;ss<<"\t"<<c;
-      if(bLog)addDbgMsgLog(ss);
-      ssStk<<ss.str()<<std::endl;
+    for(int j=0;j<2;j++){
+      //  for(int i=0;i<iBufSize;i++){
+      for(int i=0;i<iTot;i++){
+        char* c=paBtSymb[i];
+        if(c==NULL)break;
+        switch(j){
+          case 0:
+            if(bShowNow){
+              //for safety/failProof try, just directly show the details on term
+              DBGOE("DBGMSG:CurrentStackTrace:Begin >>--->");
+              /* this randomly freezes the app :(
+              backtrace_symbols_fd(paStkBuff,riTot,STDOUT_FILENO);DBGLNSELF;
+              backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);DBGLNSELF;
+               */
+              DBGOE(c);
+              DBGOE("DBGMSG:CurrentStackTrace:End   <---<<");
+            }
+            break;
+          case 1:
+            std::stringstream ss;ss<<"\t"<<c;
+            if(bLog)addDbgMsgLog(ss);
+            ssStk<<ss.str()<<std::endl;
+            break;
+        }
+      }
     }
     free(paBtSymb);
 
