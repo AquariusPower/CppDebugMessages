@@ -54,11 +54,11 @@
      * some other reason...
      */
     #define DBGOE(s) { \
-        try{std::cout.exceptions(std::cout.failbit);}catch(const std::ios_base::failure& e){std::cerr<<"ERROR:cout:"<<e.what()<<std::endl;std::cout.clear();} \
-        std::cout.flush();std::cout.clear();   \
+        try{std::cout.exceptions(std::cout.failbit);}catch(const std::ios_base::failure& e) \
+        {std::cout.clear();std::cout<<"ERROR:cout:"<<e.what()<<std::endl;} \
         std::cout<<"DBGMSG:cout:"<<s<<std::endl; \
-        try{std::cerr.exceptions(std::cerr.failbit);}catch(const std::ios_base::failure& e){std::cout<<"ERROR:cerr:"<<e.what()<<std::endl;std::cerr.clear();} \
-        std::cerr.flush();std::cerr.clear();   \
+        try{std::cerr.exceptions(std::cerr.failbit);}catch(const std::ios_base::failure& e) \
+        {std::cerr.clear();std::cerr<<"ERROR:cerr:"<<e.what()<<std::endl;} \
         std::cerr<<"DBGMSG:cerr:"<<s<<std::endl; \
       };
     #define DBGOEL(s) { \

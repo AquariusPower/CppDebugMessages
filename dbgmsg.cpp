@@ -520,34 +520,33 @@ void dbgmsg::addDbgMsgLogTmp(){
     char** paBtSymb = backtrace_symbols(paStkBuff,iTot);
 
     std::stringstream ssStk;
-    for(int j=0;j<2;j++){
-      //  for(int i=0;i<iBufSize;i++){
-      for(int i=0;i<iTot;i++){
-        char* c=paBtSymb[i];
-        if(c==NULL)break;
-        switch(j){
-          case 0:
-            if(bShowNow){
-              //for safety/failProof try, just directly show the details on term
-              DBGOE("DBGMSG:CurrentStackTrace:Begin >>--->");
-              /* this randomly freezes the app :(
-              backtrace_symbols_fd(paStkBuff,riTot,STDOUT_FILENO);DBGLNSELF;
-              backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);DBGLNSELF;
-               */
-              DBGOE(c);
-              DBGOE("DBGMSG:CurrentStackTrace:End   <---<<");
-            }
-            break;
-          case 1:
-            std::stringstream ss;ss<<"\t"<<c;
-            if(bLog)addDbgMsgLog(ss);
-            ssStk<<ss.str()<<std::endl;
-            break;
-        }
-      }
+    for(int i=0;i<iTot;i++){
+      char* c=paBtSymb[i];
+      if(c==NULL)break;
+      std::stringstream ss;ss<<"\t"<<c;
+      if(bLog)addDbgMsgLog(ss);
+      ssStk<<ss.str()<<std::endl;
+      break;
     }
     free(paBtSymb);
 
+    if(bShowNow){
+      DBGOE(""
+        <<"DBGMSG:CurrentStackTrace:Begin >>--->\n"
+        <<ssStk.str().c_str()<<"\n"
+        <<"DBGMSG:CurrentStackTrace:End   <---<<"
+      );
+      
+      /**
+       * For quality/safety/failProof try, just directly show the details on term
+       * 
+       * btw, all of these randomly freezes the app on linux :(, may be due to several outputs happening very fast to cout and cerr?
+      DBGOE(c);
+      backtrace_symbols_fd(paStkBuff,riTot,STDOUT_FILENO);DBGLNSELF;
+      backtrace_symbols_fd(paStkBuff,riTot,STDERR_FILENO);DBGLNSELF;
+      */
+    }
+    
     return DemangledPStackTrace(bShowNow,bLog,ssStk);
   }
 #endif
