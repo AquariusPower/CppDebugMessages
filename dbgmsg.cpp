@@ -63,6 +63,7 @@
 
 bool dbgmsg::bInitCompleted;
 
+bool dbgmsg::bAllowOE;
 std::stringstream dbgmsg::ssDbgMsgPartTmp;
 std::stringstream dbgmsg::ssDbgMsgTmp;
 std::vector<std::string> dbgmsg::vLastDbgMsgs;
@@ -93,6 +94,7 @@ void dbgmsg::LazyConstructor(){
 
   bInitCompleted=false;DBGLNSELFB4INIT; //FIRST!
 
+  bAllowOE=false;
   ssDbgMsgPartTmp.clear();DBGLNSELFB4INIT; //just to init
   ssDbgMsgTmp.clear();DBGLNSELFB4INIT; //just to init
   vLastDbgMsgs.clear();DBGLNSELFB4INIT;DBGOE(vLastDbgMsgs.size()) //just to init
