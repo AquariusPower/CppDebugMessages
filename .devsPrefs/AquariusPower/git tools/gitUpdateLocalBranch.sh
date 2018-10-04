@@ -7,6 +7,8 @@ strBranch="$1";
 
 git branch |egrep " $strBranch$"
 
+FUNCexecEchoW git branch "${strBranch}_BKP_`date '+%Y%m%d_%H%M%S'`" "$strBranch" # create a backup branch before updating it!!!!
+
 FUNCexecEchoW git fetch;
 
 FUNCexecEchoW git checkout "$strBranch";
