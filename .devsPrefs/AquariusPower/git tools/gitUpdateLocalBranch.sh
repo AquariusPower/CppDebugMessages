@@ -3,7 +3,13 @@
 strHelp="easily update a local branch"
 source "`which gitToolsCommonCode.sh`"
 
-strBranch="$1";
+strBranch="${1-}";
+
+if [[ -z "$strBranch" ]];then
+  git branch
+  echo "PROBLEM: a branch to update is required as parameter"
+  exit 1
+fi
 
 git branch |egrep " $strBranch$"
 
