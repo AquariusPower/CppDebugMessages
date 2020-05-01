@@ -307,6 +307,14 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
     std::stringstream ssDump;DBGLNSELFB4INIT;
 
     if(bPrependDtTm){DBGLNSELFB4INIT;
+#ifdef UNIX
+      /**
+       * This is to try to prevent a rare freeze/lockdown when calling strftime()
+       * that calls __GI___xstat() that uses /etc/localtime.
+       * May be it happens only in debug mode using a debugger?
+       */
+      static bool bInitTZenv = [](){if(!getenv("TZ"))setenv("TZ", ":/etc/localtime", 0);;return true;}();
+#endif
       static int iTmSz=100;
       char cTime[iTmSz];
       time_t rawtime;
