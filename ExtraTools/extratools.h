@@ -43,11 +43,13 @@
       double GetFloatingDouble(cchar* pcID,double dDefaultValue);
   };
   
+  typedef void (*timeoutfunc)();
   class misctools
   {
     public:
       static ulong RandomClock100();
       static ulong GetNowInNanos();
+      static void TimeoutAnyFunction(timeoutfunc F,int iWaitMicro=1000,bool bKeepThreadRunning=true,bool bThrowTimeout=true);
   };
   
 #endif //__EXTRATOOLS_H__

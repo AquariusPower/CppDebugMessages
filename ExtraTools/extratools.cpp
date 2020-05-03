@@ -35,6 +35,8 @@
 #include <ctime>
 #include <ratio>
 #include <iomanip>
+#include <future>
+#include <thread>
 
 #include "extratools.h"
 
@@ -152,7 +154,50 @@ void TestRandomClock100()
   }
 }
 
-//TODO timeout any function propagating exception
+/**
+ * TODO: fix: "terminate called without an active exception\nAborted"
+ * TODO: not working, wont continue executing anything after this call...
+ */
+void misctools::TimeoutAnyFunction(timeoutfunc F,int iWaitMicro,bool bKeepThreadRunning,bool bThrowOnTimeout)
+{
+  std::packaged_task<void()> pkgtsk(F);
+  auto fut = pkgtsk.get_future();
+  std::thread trd(std::move(pkgtsk));
+//  pkgtsk();
+//  trd.join();
+  if (fut.wait_for(std::chrono::microseconds(iWaitMicro)) != std::future_status::timeout){
+    std::cout << "OK1" << std::endl;
+    fut.get(); // propagates exception from timeoutfunc if had any
+    std::cout << "OK2" << std::endl;
+  }else{
+    if(bKeepThreadRunning){
+      std::cerr << "WARNING: Function timed out already" << std::endl;
+      trd.detach();
+    }
+    
+    if(bThrowOnTimeout)
+      throw std::runtime_error("ERROR: Waiting function to finish but it timed out.");
+  }  
+//  pkgtsk.make_ready_at_thread_exit();
+  std::cout << "RET" << std::endl;
+}
+
+void TestTimeout()
+{
+  std::cout << "Tst begin" << std::endl;
+  std::this_thread::sleep_for(std::chrono::microseconds(2000));
+  std::cout << "Tst end" << std::endl;
+}
+void TestTimeoutAnyFunction()
+{
+  std::cout << "TST NO WAIT" << std::endl;
+  misctools::TimeoutAnyFunction(&TestTimeout,1500,true,false);
+  
+  std::cout << "TST WAIT" << std::endl;
+  misctools::TimeoutAnyFunction(&TestTimeout,2500,false,false);
+  
+  std::cout << "TST WAIT ENDED" << std::endl;
+}
 
 int main(int argc, char** argv)
 {
@@ -164,12 +209,17 @@ int main(int argc, char** argv)
   
   #define TESTET(func) { \
     std::cout << strTstCmd << " \"" << #func << "\"" << std::endl; \
-    if(strTstWhat.compare(#func)==0) \
+    if(strTstWhat.compare(#func)==0){ \
+      std::cout << "Running: " << #func << std::endl; \
       func; \
+    } \
   }
 
   TESTET(TestRandomClock100());
+  TESTET(TestTimeoutAnyFunction());
     
+  std::cout << "ENDED TESTS" << std::endl;
+  
   return 0;
 }
 
