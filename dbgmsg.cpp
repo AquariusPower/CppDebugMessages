@@ -344,11 +344,11 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
     if(iMaxLinesInDebugFile>0 && llDbgmsgId>0 && ((llDbgmsgId % iMaxLinesInDebugFile) == 0)){DBGLNSELFB4INIT; //TODO is it helping preventing high IO ?
       std::stringstream ssOldFileName;DBGLNSELFB4INIT;
       ssOldFileName<<ssDbgMsgFileName.str()<<".old";DBGLNSELFB4INIT;
-
+      
       std::remove(ssOldFileName.str().c_str());DBGLNSELFB4INIT; //clean older b4 renaming
-
+      
       fldDbgMsg.close();DBGLNSELFB4INIT;
-
+      
       std::rename(ssDbgMsgFileName.str().c_str(), ssOldFileName.str().c_str());DBGLNSELFB4INIT;
     }DBGLNSELFB4INIT;
 

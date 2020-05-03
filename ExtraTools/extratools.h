@@ -28,13 +28,25 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef __ENVVARS_H__
-  #define __ENVVARS_H__
+#ifndef __EXTRATOOLS_H__
+  #define __EXTRATOOLS_H__
   
+  typedef const char cchar;
+
   class envvars
   {
-    static const char* GetStr(char* pcID,char* pcDefault);
-    static int GetInt(char* pcID,int iDefault);
+    public:
+      static const char* GetStr(cchar* pcID,cchar* pcDefaultValue="");
+      static long GetLong(cchar* pcID,long lDefaultValue=0);
+      static bool IsTrue(cchar* pcID);
+      ulong GetULong(cchar* pcID,ulong ulDefaultValue);
+      double GetFloatingDouble(cchar* pcID,double dDefaultValue);
   };
   
-#endif //__ENVVARS_H__
+  class misctools
+  {
+    public:
+      static ulong Random(ulong ulLimit=0);
+  };
+  
+#endif //__EXTRATOOLS_H__

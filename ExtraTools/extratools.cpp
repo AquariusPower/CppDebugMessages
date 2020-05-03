@@ -28,18 +28,82 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-const char* envvars::GetStr(char* pcID,char* pcDefault)
+#include <string>
+#include <iostream>
+#include <algorithm>
+#include <chrono>
+#include <ctime>
+#include <ratio>
+#include <iomanip>
+
+#include "extratools.h"
+
+const char* envvars::GetStr(cchar* pcID,cchar* pcDefaultValue)
 {
   const char* pcValue = std::getenv(pcID);
   if(pcValue!=NULL)
     return pcValue;
-  return pcDefault;
+  return pcDefaultValue;
 }
 
-int envvars::GetInt(char* pcID,int iDefault)
+long envvars::GetLong(cchar* pcID,long lDefaultValue)
 {
   const char* pcValue = std::getenv(pcID);
   if(pcValue!=NULL)
-    return atoi(pcValue);
-  return iDefault;
+    return atol(pcValue);
+  return lDefaultValue;
 }
+
+ulong envvars::GetULong(cchar* pcID,ulong ulDefaultValue)
+{
+  const char* pcValue = std::getenv(pcID);
+  if(pcValue!=NULL)
+    return strtoul(pcValue,NULL,0);
+  return ulDefaultValue;
+}
+
+double envvars::GetFloatingDouble(cchar* pcID,double dDefaultValue)
+{
+  const char* pcValue = std::getenv(pcID);
+  if(pcValue!=NULL)
+    return strtod(pcValue,NULL);
+  return dDefaultValue;
+}
+
+bool envvars::IsTrue(cchar* pcID)
+{
+  const char* pcValue = std::getenv(pcID);
+  if(pcValue!=NULL){
+    std::string str = pcValue;
+    std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+    static std::string strTrue="true";
+    return str.compare(strTrue)==0;
+  }
+  return false;
+}
+
+ulong misctools::Random(ulong ulLimit)
+{
+  using namespace std::chrono;
+  duration<double> now = duration_cast<duration<double>>(
+    high_resolution_clock::now().time_since_epoch());
+  
+  static ulong ulMultToNano = 1000000000;
+  static ulong ulNow=0;ulNow=(ulong)(now.count()*ulMultToNano);
+  
+  if(ulLimit>0)
+    return ulNow%ulLimit;
+  return ulNow;
+}
+
+int main()
+{
+  std::cout.fill('@');
+  for(int i=0;i<100;i++){
+    ulong ul=misctools::Random(100);
+    std::cout<<std::setw(ul)<<std::right<<ul<<std::endl;
+  }
+  
+  return 0;
+}
+
