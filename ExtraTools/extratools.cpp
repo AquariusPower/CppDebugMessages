@@ -154,10 +154,21 @@ void TestRandomClock100()
 
 //TODO timeout any function propagating exception
 
-int main()
+int main(int argc, char** argv)
 {
   
-  TestRandomClock100();
+  static std::string strTstCmd="--test";
+  std::string strTstWhat;
+  if(argc > 1 && std::string(argv[1]) == strTstCmd)
+    strTstWhat=std::string(argv[2]);
+  
+  #define TESTET(func) { \
+    std::cout << strTstCmd << " \"" << #func << "\"" << std::endl; \
+    if(strTstWhat.compare(#func)==0) \
+      func; \
+  }
+
+  TESTET(TestRandomClock100());
     
   return 0;
 }
