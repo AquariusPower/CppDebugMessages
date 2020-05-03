@@ -49,7 +49,7 @@
     public:
       static ulong RandomClock100();
       static ulong GetNowInNanos();
-      static void TimeoutAnyFunction(timeoutfunc F,int iWaitMicro=1000,bool bKeepThreadRunning=true,bool bThrowTimeout=true);
+      static void TimeoutAnyFunction(timeoutfunc F,int iWaitMicro=1000,bool bDetachThreadOnTimeout=true,bool bThrowTimeoutException=true);
   };
   
 #endif //__EXTRATOOLS_H__

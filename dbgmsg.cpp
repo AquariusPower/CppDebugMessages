@@ -58,6 +58,8 @@
 #define stat _stat
 #endif
 
+#include "extratools.h"
+
 #define DBGLNSELF {DBGOE(DBGFLF);};
 #define DBGLNSELFB4INIT {if(!dbgmsg::bInitCompleted){ DBGLNSELF; }};
 
@@ -319,6 +321,8 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
       char cTime[iTmSz];
       time_t rawtime;
       time(&rawtime);
+//      misctools::TimeoutAnyFunction([cTime,iTmSz,rawtime](){strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));}(),
+//        100000,false,false)
       strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&rawtime));
     //  strftime(cTime,iTmSz,"%Y/%m/%d-%H:%M:%S",localtime(&(attr.st_mtime)));
       ssDump<<cTime;

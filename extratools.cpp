@@ -158,45 +158,62 @@ void TestRandomClock100()
  * TODO: fix: "terminate called without an active exception\nAborted"
  * TODO: not working, wont continue executing anything after this call...
  */
-void misctools::TimeoutAnyFunction(timeoutfunc F,int iWaitMicro,bool bKeepThreadRunning,bool bThrowOnTimeout)
+void misctools::TimeoutAnyFunction(timeoutfunc F,int iWaitMicro,bool bDetachThreadOnTimeout,bool bThrowOnTimeout)
 {
   std::packaged_task<void()> pkgtsk(F);
   auto fut = pkgtsk.get_future();
   std::thread trd(std::move(pkgtsk));
+  bool bDbg=false;//true;
 //  pkgtsk();
-//  trd.join();
   if (fut.wait_for(std::chrono::microseconds(iWaitMicro)) != std::future_status::timeout){
-    std::cout << "OK1" << std::endl;
+    if(bDbg)std::cerr << "TimeoutAnyFunction:OK:1" << std::endl;
     fut.get(); // propagates exception from timeoutfunc if had any
-    std::cout << "OK2" << std::endl;
+    trd.join();
+    if(bDbg)std::cerr << "TimeoutAnyFunction:OK:2" << std::endl;
   }else{
-    if(bKeepThreadRunning){
-      std::cerr << "WARNING: Function timed out already" << std::endl;
+    if(bDetachThreadOnTimeout){
+      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&detach:1" << std::endl;
+      std::cerr << "WARNING: detaching function thread that timed out" << std::endl;
       trd.detach();
-    }
+      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&detach:2" << std::endl;
+    }else{
+      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&join:1" << std::endl;
+      trd.join();
+      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&join:2" << std::endl;
+  }
     
     if(bThrowOnTimeout)
       throw std::runtime_error("ERROR: Waiting function to finish but it timed out.");
   }  
 //  pkgtsk.make_ready_at_thread_exit();
-  std::cout << "RET" << std::endl;
+  if(bDbg)std::cerr << "TimeoutAnyFunction:RET" << std::endl;
 }
 
 void TestTimeout()
 {
-  std::cout << "Tst begin" << std::endl;
+  std::cerr << "TestTimeout:begin:"<<std::this_thread::get_id()<< std::endl;
   std::this_thread::sleep_for(std::chrono::microseconds(2000));
-  std::cout << "Tst end" << std::endl;
+  std::cerr << "TestTimeout:end:"<<std::this_thread::get_id()<< std::endl;
 }
 void TestTimeoutAnyFunction()
 {
-  std::cout << "TST NO WAIT" << std::endl;
+  std::cerr << "TestTimeoutAnyFunction:NO WAIT join&ignore" << std::endl;
+  misctools::TimeoutAnyFunction(&TestTimeout,1500,false,false);
+
+  std::cerr << "TestTimeoutAnyFunction:WAIT joing&ignore" << std::endl;
+  misctools::TimeoutAnyFunction(&TestTimeout,2500,false,false);
+
+  std::cerr << "TestTimeoutAnyFunction:NO WAIT detach&ignore" << std::endl;
   misctools::TimeoutAnyFunction(&TestTimeout,1500,true,false);
   
-  std::cout << "TST WAIT" << std::endl;
-  misctools::TimeoutAnyFunction(&TestTimeout,2500,false,false);
+  try{
+    std::cerr << "TestTimeoutAnyFunction:NO WAIT detach&throw" << std::endl;
+    misctools::TimeoutAnyFunction(&TestTimeout,1500,true,true);
+  }catch(std::runtime_error e){
+    std::cerr << "ExceptionCatch:" << e.what() << std::endl;
+  }
   
-  std::cout << "TST WAIT ENDED" << std::endl;
+  std::cerr << "TestTimeoutAnyFunction:ENDED" << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -208,17 +225,17 @@ int main(int argc, char** argv)
     strTstWhat=std::string(argv[2]);
   
   #define TESTET(func) { \
-    std::cout << strTstCmd << " \"" << #func << "\"" << std::endl; \
+    std::cerr << strTstCmd << " \"" << #func << "\"" << std::endl; \
     if(strTstWhat.compare(#func)==0){ \
-      std::cout << "Running: " << #func << std::endl; \
+      std::cerr << "ExtraTools Running: " << #func << std::endl; \
       func; \
     } \
   }
 
+  std::cerr << "ExtraTools: Options" << std::endl;
   TESTET(TestRandomClock100());
   TESTET(TestTimeoutAnyFunction());
-    
-  std::cout << "ENDED TESTS" << std::endl;
+  std::cerr << "ExtraTools: ENDED TESTS" << std::endl;
   
   return 0;
 }
