@@ -97,59 +97,68 @@ ulong misctools::GetNowInNanos()
   return (ulong)(now.count()*ulMultToNano);
 }
 
-ulong misctools::RandomClock100()
+uint CheckDiv2()
 {
-//  static ulong ulNow=0;
-//  static ulong ulAdd=0;
-  static ulong ulRet=0;
+  for(int i=0;i<1000;i++){
+    if(misctools::GetNowInNanos()%2==1)
+      return 1;
+  }
   
-//  static ulong retry=0;
-//  retry = (GetNowInNanos()/10)%10;
-////  std::cout<<"RETRY="<<retry<<std::endl;
-//  for(uint i=0;i<retry;i++){
-//    ulNow=GetNowInNanos()/10; //ignore the last decimal that is always multiple of 2
-//  }
+  std::cerr<<"WARNING: nano time is always multiple of 2, using workaround."<<std::endl;
   
   /**
-   * /10 to Ignore the last decimal that is always multiple of 2.
-   * %100 consider only the most varying decimals.
+   * dividing by 10 lets it discard the last decimal that is always multiple of 2
    */
-  #define USEFULLVALUE ((GetNowInNanos()/10)%100)
-  
-//  ulNow = GetNowInNanos();
-//  
-//  //ignore the last decimal that is always multiple of 2
-//  ulRet = ulNow/10; 
-//  
-//  //consider only remaining 2 decimals: 0 to 99
-//  ulRet %= 100;
-//  
-//  //trick
-//  ulAdd = 1+((GetNowInNanos()/10)%100);
-//  ulNow += ulAdd;
-  
-  ulRet = USEFULLVALUE + (USEFULLVALUE%2==0 ? USEFULLVALUE : 0);
-  
-  return ulRet%100; 
+  return 10; 
 }
 
-//TODO timeout function
+/**
+ * This may be considered a pseudo random (predictable in some way).
+ * @return 0 to 99
+ */
+ulong misctools::RandomClock100()
+{
+  /**
+   * This looks good on my test machine, for instant and subsequent random value requests.
+   * The decimals that varied most were the last 3 ones.
+   * The last one is discarded here tho as my test machine has the CheckDiv2() problem.
+   * PROBLEM: this needs to be further tested on a extremelly fast hardware to determine if there swill have easily predictible results.
+   */
+  static uint iRemainderOf = 100; // to consider only the most varying decimals
+  
+  static uint iDiv=CheckDiv2();
+  #define USEFULLVALUE ((GetNowInNanos()/iDiv)%iRemainderOf)
+  static ulong ulRet=USEFULLVALUE;
+  static ulong ulRetPrevious=USEFULLVALUE;
+  
+  ulRet += ulRetPrevious;
+  static int tot;tot = USEFULLVALUE%10; //std::cout<<"TOT="<<tot<<std::endl;
+  for(int i=0;i<tot;i++) // this also creates a delay for the next reading
+    ulRet += USEFULLVALUE;
+  
+  ulRet = ulRet%iRemainderOf;
+  
+  ulRetPrevious = ulRet; 
+  
+  return ulRet;
+}
+
+void TestRandomClock100()
+{
+  std::cout.fill('@');
+  for(int i=0;i<50;i++){
+    ulong ul=misctools::RandomClock100();
+    std::cout<<std::setw(ul)<<std::right<<ul<<std::endl;
+  }
+}
+
+//TODO timeout any function propagating exception
 
 int main()
 {
-  std::cout.fill('@');
-  for(int i=0;i<100;i++){
-//    ulong ul=misctools::Random();
-//    std::cout<<ul<<std::endl;
-    
-    ulong ul=misctools::RandomClock100();
-    std::cout<<std::setw(ul)<<std::right<<ul<<std::endl;
-    
-//    std::cout<<misctools::RandomClock100()<<std::endl;
-    
-//    std::cout<<misctools::GetNowInNanos()<<std::endl;
-  }
   
+  TestRandomClock100();
+    
   return 0;
 }
 
