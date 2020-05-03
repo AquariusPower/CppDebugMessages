@@ -46,7 +46,8 @@
   class misctools
   {
     public:
-      static ulong Random(ulong ulLimit=0);
+      static ulong RandomClock100();
+      static ulong GetNowInNanos();
   };
   
 #endif //__EXTRATOOLS_H__

@@ -82,26 +82,72 @@ bool envvars::IsTrue(cchar* pcID)
   return false;
 }
 
-ulong misctools::Random(ulong ulLimit)
+/**
+ * problem: this always return a multiple of 2 (on my machine at least)
+ */
+ulong misctools::GetNowInNanos()
 {
   using namespace std::chrono;
+  
   duration<double> now = duration_cast<duration<double>>(
     high_resolution_clock::now().time_since_epoch());
   
   static ulong ulMultToNano = 1000000000;
-  static ulong ulNow=0;ulNow=(ulong)(now.count()*ulMultToNano);
   
-  if(ulLimit>0)
-    return ulNow%ulLimit;
-  return ulNow;
+  return (ulong)(now.count()*ulMultToNano);
 }
+
+ulong misctools::RandomClock100()
+{
+//  static ulong ulNow=0;
+//  static ulong ulAdd=0;
+  static ulong ulRet=0;
+  
+//  static ulong retry=0;
+//  retry = (GetNowInNanos()/10)%10;
+////  std::cout<<"RETRY="<<retry<<std::endl;
+//  for(uint i=0;i<retry;i++){
+//    ulNow=GetNowInNanos()/10; //ignore the last decimal that is always multiple of 2
+//  }
+  
+  /**
+   * /10 to Ignore the last decimal that is always multiple of 2.
+   * %100 consider only the most varying decimals.
+   */
+  #define USEFULLVALUE ((GetNowInNanos()/10)%100)
+  
+//  ulNow = GetNowInNanos();
+//  
+//  //ignore the last decimal that is always multiple of 2
+//  ulRet = ulNow/10; 
+//  
+//  //consider only remaining 2 decimals: 0 to 99
+//  ulRet %= 100;
+//  
+//  //trick
+//  ulAdd = 1+((GetNowInNanos()/10)%100);
+//  ulNow += ulAdd;
+  
+  ulRet = USEFULLVALUE + (USEFULLVALUE%2==0 ? USEFULLVALUE : 0);
+  
+  return ulRet%100; 
+}
+
+//TODO timeout function
 
 int main()
 {
   std::cout.fill('@');
   for(int i=0;i<100;i++){
-    ulong ul=misctools::Random(100);
+//    ulong ul=misctools::Random();
+//    std::cout<<ul<<std::endl;
+    
+    ulong ul=misctools::RandomClock100();
     std::cout<<std::setw(ul)<<std::right<<ul<<std::endl;
+    
+//    std::cout<<misctools::RandomClock100()<<std::endl;
+    
+//    std::cout<<misctools::GetNowInNanos()<<std::endl;
   }
   
   return 0;
