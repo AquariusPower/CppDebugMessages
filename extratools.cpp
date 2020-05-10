@@ -28,17 +28,20 @@
 //  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-#include <iostream>
 #include <algorithm>
 #include <chrono>
 #include <ctime>
-#include <ratio>
-#include <iomanip>
 #include <future>
+#include <iomanip>
+#include <iostream>
+#include <ratio>
+#include <string>
 #include <thread>
+#include <type_traits>
 
 #include "extratools.h"
+
+using namespace std::chrono_literals;
 
 const char* envvars::GetStr(cchar* pcID,cchar* pcDefaultValue)
 {
@@ -154,62 +157,51 @@ void TestRandomClock100()
   }
 }
 
-/**
- * TODO: fix: "terminate called without an active exception\nAborted"
- * TODO: not working, wont continue executing anything after this call...
- */
-void misctools::TimeoutAnyFunction(timeoutfunc F,int iWaitMicro,bool bDetachThreadOnTimeout,bool bThrowOnTimeout)
+template <typename TypeFunc, typename TypeDur, class... TypeArgs> 
+std::result_of_t<TypeFunc&&(TypeArgs&&...)> 
+misctools::TimeoutAnyFunction(TypeFunc&& func, TypeDur wait, TypeArgs&&... args)
 {
-  std::packaged_task<void()> pkgtsk(F);
+  using res = std::result_of_t<TypeFunc&&(TypeArgs&&...)>;
+  std::packaged_task<res(TypeArgs...)> pkgtsk(func);
   auto fut = pkgtsk.get_future();
-  std::thread trd(std::move(pkgtsk));
-  bool bDbg=false;//true;
-//  pkgtsk();
-  if (fut.wait_for(std::chrono::microseconds(iWaitMicro)) != std::future_status::timeout){
-    if(bDbg)std::cerr << "TimeoutAnyFunction:OK:1" << std::endl;
-    fut.get(); // propagates exception from timeoutfunc if had any
+  std::thread trd(std::move(pkgtsk), std::forward<TypeArgs>(args)...);
+  bool bDbg=true;
+  if (fut.wait_for(wait) != std::future_status::timeout){
+    if(bDbg)std::cerr << "TimeoutAnyFunction:OK:A:" << std::this_thread::get_id()<<std::endl;
     trd.join();
-    if(bDbg)std::cerr << "TimeoutAnyFunction:OK:2" << std::endl;
+    if(bDbg)std::cerr << "TimeoutAnyFunction:OK:B:" << std::this_thread::get_id()<<std::endl;
+    return fut.get(); // propagates exception from timeoutfunc if had any
   }else{
-    if(bDetachThreadOnTimeout){
-      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&detach:1" << std::endl;
-      std::cerr << "WARNING: detaching function thread that timed out" << std::endl;
-      trd.detach();
-      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&detach:2" << std::endl;
-    }else{
-      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&join:1" << std::endl;
-      trd.join();
-      if(bDbg)std::cerr << "TimeoutAnyFunction:fail&join:2" << std::endl;
-  }
+    if(bDbg)std::cerr << "TimeoutAnyFunction:fail&detach:A:" << std::this_thread::get_id()<<std::endl;
+    std::cerr << "WARNING: detaching function thread that timed out:" << std::this_thread::get_id()<<std::endl;
+    trd.detach();
+    if(bDbg)std::cerr << "TimeoutAnyFunction:fail&detach:B:" << std::this_thread::get_id()<<std::endl;
     
-    if(bThrowOnTimeout)
-      throw std::runtime_error("ERROR: Waiting function to finish but it timed out.");
-  }  
-//  pkgtsk.make_ready_at_thread_exit();
-  if(bDbg)std::cerr << "TimeoutAnyFunction:RET" << std::endl;
+    auto tid = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << "ERROR: Waiting function to finish but it timed out:";
+    ss << tid;
+    throw std::runtime_error(ss.str().c_str());
+  }
 }
 
 void TestTimeout()
 {
-  std::cerr << "TestTimeout:begin:"<<std::this_thread::get_id()<< std::endl;
-  std::this_thread::sleep_for(std::chrono::microseconds(2000));
-  std::cerr << "TestTimeout:end:"<<std::this_thread::get_id()<< std::endl;
+  std::cerr << "TestTimeout:begin:"<<std::this_thread::get_id()<<std::endl;
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::cerr << "TestTimeout:end:"<<std::this_thread::get_id()<<std::endl;
 }
 void TestTimeoutAnyFunction()
 {
-  std::cerr << "TestTimeoutAnyFunction:NO WAIT join&ignore" << std::endl;
-  misctools::TimeoutAnyFunction(&TestTimeout,1500,false,false);
-
-  std::cerr << "TestTimeoutAnyFunction:WAIT joing&ignore" << std::endl;
-  misctools::TimeoutAnyFunction(&TestTimeout,2500,false,false);
-
-  std::cerr << "TestTimeoutAnyFunction:NO WAIT detach&ignore" << std::endl;
-  misctools::TimeoutAnyFunction(&TestTimeout,1500,true,false);
-  
   try{
-    std::cerr << "TestTimeoutAnyFunction:NO WAIT detach&throw" << std::endl;
-    misctools::TimeoutAnyFunction(&TestTimeout,1500,true,true);
-  }catch(std::runtime_error e){
+    std::cerr << "TestTimeoutAnyFunction: join" << std::endl;
+    misctools::TimeoutAnyFunction(TestTimeout,std::chrono::seconds(3));
+
+//    std::this_thread::sleep_for(std::chrono::seconds(1));
+    
+    std::cerr << "TestTimeoutAnyFunction: detach" << std::endl;
+    misctools::TimeoutAnyFunction(TestTimeout,std::chrono::seconds(1));
+  }catch(std::exception& e){
     std::cerr << "ExceptionCatch:" << e.what() << std::endl;
   }
   

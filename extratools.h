@@ -49,7 +49,9 @@
     public:
       static ulong RandomClock100();
       static ulong GetNowInNanos();
-      static void TimeoutAnyFunction(timeoutfunc F,int iWaitMicro=1000,bool bDetachThreadOnTimeout=true,bool bThrowTimeoutException=true);
+      template <typename TypeFunc, typename TypeDur, class... TypeArgs> 
+        static std::result_of_t<TypeFunc&&(TypeArgs&&...)> 
+          TimeoutAnyFunction(TypeFunc&& func, TypeDur wait, TypeArgs&&... args);
   };
   
 #endif //__EXTRATOOLS_H__

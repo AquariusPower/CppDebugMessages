@@ -58,7 +58,7 @@
 #define stat _stat
 #endif
 
-#include "extratools.h"
+//#include "extratools.h"
 
 #define DBGLNSELF {DBGOE(DBGFLF);};
 #define DBGLNSELFB4INIT {if(!dbgmsg::bInitCompleted){ DBGLNSELF; }};
