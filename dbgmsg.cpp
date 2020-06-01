@@ -84,7 +84,7 @@ int dbgmsg::iPid;
 int dbgmsg::iMaxLinesInDebugFile;
 ulong dbgmsg::iMaxCrashLinesInMemory;
 std::vector<std::string> dbgmsg::vLastDbgMsgs;
-std::vector<std::pair<std::string,std::string>> dbgmsg::vIdVal;
+std::vector<typePairDbgIdVal> dbgmsg::vIdVal;
 
 unsigned long long llDesperateInternalInitRandomKey; // TODO why I need this? :/
 
@@ -102,14 +102,29 @@ std::string dbgmsg::SetVar(){
   std::string strId=ssVarIdTmp.str();
   std::string strValue=ssVarValueTmp.str();
   
-  ssVarValueTmp.clear();
-  std::string strOld=GetVar();
+//  DBGVARCLEAR;
+//  ssVarIdTmp<<strId;
+//  std::string strOld=GetVar();
   
-  vIdVal.push_back(std::make_pair(strId,strValue));
+  static std::string strIdChk;
+  static std::string strValOld;
+  bool bFoundId=false;
+  for(uint i=0;i<vIdVal.size();i++){
+    strIdChk=vIdVal[i].first;
+    if(strId==strIdChk){
+      strValOld=vIdVal[i].second;
+      vIdVal[i].second=strValue;
+      bFoundId=true;
+      break;
+    }    
+  }
+  if(!bFoundId){
+    vIdVal.push_back(std::make_pair(strId,strValue));
+  }
   
   DBGVARCLEAR;
   
-  return strOld;
+  return strValOld;
 }
 std::string dbgmsg::GetVar(){
   std::string strId=ssVarIdTmp.str();
@@ -630,11 +645,23 @@ void dbgmsg::addDbgMsgLogTmp(){
 #endif //UNIX
 
 #ifdef DBGMSG_SELF_TEST
-int main(){  // just to compile...
-  DBGGETV("strTst1","B");
-  DBGGETV("strTst1","C");
-  DBGSETV("strTst1","A");
-  DBGGETV("strTst1","D");
+void TestSetGetVar(){
+  DBGGETV("strTst1","Z");
+  DBGGETV("strTst1","Y");
+  
+  std::string strOld;
+  strOld = DBGSETV("strTst1","A");
+  DBGOE("OldValue(JustSet:A)='"<<strOld<<"'");
+  strOld = DBGSETV("strTst1","B");
+  DBGOE("OldValue(JustSet:B)='"<<strOld<<"'");
+  strOld = DBGSETV("strTst1","C");
+  DBGOE("OldValue(JustSet:C)='"<<strOld<<"'");
+  
+  std::string str = DBGGETV("strTst1","D");
+  DBGOE("FinalValue:"<<str<<".");
+}
+int main(){
+  TestSetGetVar();
   return 0;
 }
 #endif

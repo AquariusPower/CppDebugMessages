@@ -71,7 +71,8 @@
       std::stringstream ssDBGOEL;ssDBGOEL<<s; \
       dbgmsg::addDbgMsgLog(ssDBGOEL); \
     };
-
+    
+    typedef std::pair<std::string,std::string> typePairDbgIdVal;
     class dbgmsg{
       public:
         dbgmsg();
@@ -125,7 +126,8 @@
         static std::vector<std::string> vLastDbgMsgs;
         static bool bPrependDtTm;
         static bool bPrependDbgmsgId;
-        static std::vector<std::pair<std::string,std::string>> vIdVal;
+//        static std::vector<std::pair<std::string,std::string>> vIdVal;
+        static std::vector<typePairDbgIdVal> vIdVal;
 
       #ifdef UNIX //keep same order of cpp file w/e
       public:
@@ -177,8 +179,20 @@
 
     #define DBGS(SS) (dbgmsg::str(SS.str().c_str(),DBGTOSTR(SS))) //stringstream
     
-    #define DBGSETV(id,val)    {dbgmsg::ssVarIdTmp<<id;dbgmsg::ssVarValueTmp<<val;DBG4("DBGSETV",id,val,dbgmsg::SetVar());}
-    #define DBGGETV(id,defval) {dbgmsg::ssVarIdTmp<<id;dbgmsg::ssVarValueTmp<<defval;DBG4("DBGGETV",id,defval,dbgmsg::GetVar());}
+    #define DBGSETV(id,val) [](){\
+      dbgmsg::ssVarIdTmp<<id;\
+      dbgmsg::ssVarValueTmp<<val;\
+      std::string strSetVar=dbgmsg::SetVar();\
+      DBG4("DBGSETV",id,val,strSetVar);\
+      return strSetVar;\
+    }();
+    #define DBGGETV(id,defval) [](){\
+      dbgmsg::ssVarIdTmp<<id;\
+      dbgmsg::ssVarValueTmp<<defval;\
+      std::string strGetVar=dbgmsg::GetVar();\
+      DBG4("DBGGETV",id,defval,strGetVar);\
+      return strGetVar;\
+    }();
 
     //too messy... #define DBGEXEC(cmds) {DBGSS(DBGTOSTR(cmds));cmds;}
     #define DBGEXEC(cmds) {if(dbgmsg::IsInitialized()){cmds;}} //this helps a lot by avoiding #ifdef for DBGMSG
