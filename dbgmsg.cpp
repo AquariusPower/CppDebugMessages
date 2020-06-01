@@ -76,7 +76,6 @@ std::stringstream dbgmsg::ssDbgMsgTmp;
 std::stringstream dbgmsg::ssDbgMsgFileName;
 std::stringstream dbgmsg::ssDbgMsgFileNameCrash;
 std::stringstream dbgmsg::ssDbgMsgPath;
-std::stringstream dbgmsg::ssVarIdTmp;
 std::stringstream dbgmsg::ssVarValueTmp;
 std::ofstream dbgmsg::fldDbgMsg;
 unsigned long long dbgmsg::llDbgmsgId;
@@ -93,18 +92,11 @@ dbgmsg::dbgmsg(){DBGOE(DBGFLF<<":DBGMSG:RealConstructorIn"); //TODO never run?
 }
 
 #define DBGVARCLEAR \
-  ssVarIdTmp.str(std::string());\
-  ssVarIdTmp.clear();\
   ssVarValueTmp.str(std::string());\
   ssVarValueTmp.clear();
 
-std::string dbgmsg::SetVar(){
-  std::string strId=ssVarIdTmp.str();
+std::string dbgmsg::SetVar(std::string strId){
   std::string strValue=ssVarValueTmp.str();
-  
-//  DBGVARCLEAR;
-//  ssVarIdTmp<<strId;
-//  std::string strOld=GetVar();
   
   static std::string strIdChk;
   static std::string strValOld;
@@ -126,8 +118,7 @@ std::string dbgmsg::SetVar(){
   
   return strValOld;
 }
-std::string dbgmsg::GetVar(){
-  std::string strId=ssVarIdTmp.str();
+std::string dbgmsg::GetVar(std::string strId){
   std::string strDefaultValue=ssVarValueTmp.str();
   
   static std::string strIdChk;
@@ -179,7 +170,6 @@ void dbgmsg::LazyConstructor(){
   llDbgmsgId=0;DBGLNSELFB4INIT;
   iMaxLinesInDebugFile = 100000;DBGLNSELFB4INIT;
   iMaxCrashLinesInMemory = 1000;DBGLNSELFB4INIT;
-  ssVarIdTmp.clear();DBGLNSELFB4INIT;
   vIdVal.clear();DBGLNSELFB4INIT;
   ssVarValueTmp.clear();DBGLNSELFB4INIT;
   bAddingLog=false;DBGLNSELFB4INIT;DBGOE(bAddingLog);
@@ -646,18 +636,45 @@ void dbgmsg::addDbgMsgLogTmp(){
 
 #ifdef DBGMSG_SELF_TEST
 void TestSetGetVar(){
-  DBGGETV("strTst1","Z");
-  DBGGETV("strTst1","Y");
+  /**
+   * this test accepts anything but...
+   * it is recommended that the id specifies the value type
+   * to not missmatch set and get eg:
+   *  "dValueDouble",5.64
+   *  "iValuInteger",234
+   *  "strValueString","asdf"
+   */
+  
+//  #define strId "Tst1"
+  std::string strId="Tst1";
+  
+  DBGGETV(strId,"Z");
+  DBGGETV(strId,"Y");
   
   std::string strOld;
-  strOld = DBGSETV("strTst1","A");
+  
+  strOld = DBGSETV(strId,"A");
   DBGOE("OldValue(JustSet:A)='"<<strOld<<"'");
-  strOld = DBGSETV("strTst1","B");
-  DBGOE("OldValue(JustSet:B)='"<<strOld<<"'");
-  strOld = DBGSETV("strTst1","C");
+  
+  strOld = DBGSETV(strId,145);
+  DBGOE("OldValue(JustSet:145)='"<<strOld<<"'");
+  long l = DBGGETVD(strId,9);
+  DBGOE("GetI:"<<l);
+  
+  strOld = DBGSETV(strId,5.76);
+  DBGOE("OldValue(JustSet:5.76)='"<<strOld<<"'");
+  double d = DBGGETVD(strId,1.95);
+  DBGOE("GetD:"<<d);
+  
+  strOld = DBGSETV(strId,"C");
   DBGOE("OldValue(JustSet:C)='"<<strOld<<"'");
   
-  std::string str = DBGGETV("strTst1","D");
+  std::string str;
+  
+  str = DBGGETV(strId,"D");
+  DBGOE("FinalValue:"<<str<<".");
+  
+  str = DBGGETV("TestConstID","M");
   DBGOE("FinalValue:"<<str<<".");
 }
 int main(){
