@@ -80,13 +80,43 @@ bool dbgmsg::bPidAllowed;
 int dbgmsg::iPid;
 unsigned long long dbgmsg::llDbgmsgId;
 int dbgmsg::iMaxLinesInDebugFile;
-int dbgmsg::iMaxCrashLinesInMemory;
+ulong dbgmsg::iMaxCrashLinesInMemory;
 bool dbgmsg::bAddingLog;
+std::vector<std::pair<std::string,std::string>> dbgmsg::vIdVal;
 
 unsigned long long llDesperateInternalInitRandomKey; // TODO why I need this? :/
 
+#ifdef DBGMSG_SELF_TEST
+int main(){  // just to compile...
+  return 0;
+}
+#endif
+
 dbgmsg::dbgmsg(){DBGOE(DBGFLF<<":DBGMSG:RealConstructorIn"); //TODO never run?
   LazyConstructor();
+}
+
+std::string dbgmsg::SetVar(std::string strId,std::string strValue){
+  std::string strOld=GetVar(strId,"");
+  vIdVal.push_back(std::make_pair(strId,strValue));
+  return strOld;
+}
+std::string dbgmsg::GetVar(std::string strId,std::string strDefaultValue){
+  static std::string strIdChk;
+  static std::string strValStored;
+  for(uint i=0;i<vIdVal.size();i++){
+    strIdChk=vIdVal[i].first;
+    strValStored=vIdVal[i].second;
+    if(strId==strIdChk){
+      return strValStored;
+//      if(strValStored.empty() || strValStored=="0" || strValStored=="0.0"){
+//        return strDefaultValue;
+//      }else{
+//        return strValStored;
+//      }
+    }
+  }
+  return strDefaultValue;
 }
 
 void dbgmsg::LazyConstructor(){
@@ -119,8 +149,10 @@ void dbgmsg::LazyConstructor(){
   /**
    * CALLS ONLY AFTER llDesperateInternalInitRandomKey is set !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    */
-
+  
+#ifdef UNIX
   getCurrentStackTraceSS(true,false);
+#endif
 
   DBGOE(DBGFLF<<":DBGMSG:Out");
 }
@@ -184,7 +216,9 @@ void dbgmsg::init(){DBGLNSELFB4INIT;
 
   initStream();DBGLNSELFB4INIT;
 
+#ifdef UNIX
   getCurrentStackTraceSS(true,false);DBGLNSELFB4INIT;
+#endif
 //  std::stringstream ss;ss<<"DBGMSG INIT COMPLETED!";DBGLNSELFB4INIT;
 //  addDbgMsgLog(ss);DBGLNSELFB4INIT;
   DBGOE("DBGMSG INIT COMPLETED!");DBGLNSELFB4INIT;
@@ -287,8 +321,10 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
 
       DBGOE("exiting now!!!");
 
+#ifdef UNIX
       getCurrentStackTraceSS(true,false);
-
+#endif
+      
       exit(1); //TODO not completely exiting... crash it?
     }
 
@@ -315,7 +351,7 @@ void dbgmsg::addDbgMsgLogLine(std::stringstream& ss)
        * that calls __GI___xstat() that uses /etc/localtime.
        * May be it happens only in debug mode using a debugger?
        */
-      static bool bInitTZenv = [](){if(!getenv("TZ"))setenv("TZ", ":/etc/localtime", 0);;return true;}();
+      static bool bInitTZenv = [](){if(!getenv("TZ"))setenv("TZ", ":/etc/localtime", 0);;return true;}();if(bInitTZenv){};
 #endif
       static int iTmSz=100;
       char cTime[iTmSz];
@@ -412,9 +448,9 @@ void dbgmsg::addDbgMsgLogTmp(){
     fldDbgMsgCrash.open(ssDbgMsgFileNameCrash.str());
     long long llDbgmsgIdCrash = llDbgmsgId - iMaxCrashLinesInMemory;
     if(llDbgmsgIdCrash<0)llDbgmsgIdCrash=0;
-    int iMaxCrashLines = 100;
+    ulong iMaxCrashLines = 100;
     if(vLastDbgMsgs.size()<iMaxCrashLines)iMaxCrashLines=vLastDbgMsgs.size();
-    for(int i=0;i<iMaxCrashLines;i++){
+    for(ulong i=0;i<iMaxCrashLines;i++){
   //    fldDbgMsgCrash<<" d"<<(llDbgmsgIdCrash++)<<" @ "<<vLastDbgMsgs[i]<<std::endl;
       fldDbgMsgCrash<<" "<<vLastDbgMsgs[i]<<std::endl;
       fldDbgMsgCrash.flush(); //just to be sure
@@ -425,6 +461,7 @@ void dbgmsg::addDbgMsgLogTmp(){
     if(bWaitOnCrash){
       DBGOE(ss.str()); //granting it will be readable
       int i=std::scanf("%s",(char*)ss.str().c_str()); //this helps on reading/copying the dbg file before the random inevitable(?) trunc!
+      DBGOE(i);
     }
 
     exit(iSig); //1 or something else to just identify it was handled?
@@ -459,6 +496,8 @@ void dbgmsg::addDbgMsgLogTmp(){
   std::stringstream dbgmsg::DemangledPStackTrace(bool bShowNow, bool bLog, std::stringstream& ssStk) //TODO opt: show log
   {
     std::stringstream ssRet;
+    
+    if(bShowNow){}
 
     ssRet<<"DemangledStackTrace:";
     
@@ -563,6 +602,6 @@ void dbgmsg::addDbgMsgLogTmp(){
     
     return DemangledPStackTrace(bShowNow,bLog,ssStk);
   }
-#endif
+#endif //UNIX
 
 #endif //DBGMSG

@@ -55,10 +55,13 @@
      */
     #define DBGOE(s) { \
         if(dbgmsg::bAllowOE){ \
-          try{std::cout.exceptions(std::cout.failbit);}catch(const std::ios_base::failure& e) \
+          try{std::cout.exceptions(std::cout.failbit);}\
+          catch(const std::ios_base::failure& e) \
           {std::cout.clear();std::cout<<"ERROR:cout:"<<e.what()<<std::endl;} \
           std::cout<<"DBGMSG:cout:"<<s<<std::endl; \
-          try{std::cerr.exceptions(std::cerr.failbit);}catch(const std::ios_base::failure& e) \
+          \
+          try{std::cerr.exceptions(std::cerr.failbit);}\
+          catch(const std::ios_base::failure& e) \
           {std::cerr.clear();std::cerr<<"ERROR:cerr:"<<e.what()<<std::endl;} \
           std::cerr<<"DBGMSG:cerr:"<<s<<std::endl; \
         } \
@@ -91,6 +94,8 @@
         static void SetPrependDbgmsgId(bool b){bPrependDbgmsgId=b;}
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
         static bool IsInitialized(){return bInitCompleted;}
+        static std::string SetVar(std::string strId,std::string strValue); //returns previous value
+        static std::string GetVar(std::string strId,std::string strDefaultValue);
         ~dbgmsg(){DBGOE("DBGMSG:destructor"); if(fldDbgMsg.is_open())fldDbgMsg.close(); } //TODO never run?
       private:
         static void init();
@@ -102,7 +107,7 @@
 //        static std::ofstream& fldDbgMsg();
 //        static bool& bInitCompleted();
 
-        static int iMaxCrashLinesInMemory;
+        static ulong iMaxCrashLinesInMemory;
         static bool bAddingLog;
         static unsigned long long llDbgmsgId;
         static std::ofstream fldDbgMsg;
@@ -118,6 +123,7 @@
         static std::vector<std::string> vLastDbgMsgs;
         static bool bPrependDtTm;
         static bool bPrependDbgmsgId;
+        static std::vector<std::pair<std::string,std::string>> vIdVal;
 
       #ifdef UNIX //keep same order of cpp file w/e
       public:
@@ -168,6 +174,9 @@
     #define DBGSC(C) DBG1(C)
 
     #define DBGS(SS) (dbgmsg::str(SS.str().c_str(),DBGTOSTR(SS))) //stringstream
+    
+    #define DBGSETV(id,val) (dbgmsg::SetVar(id,std::stringstream()<<val);DBG3("DBGSETV",id,val))
+    #define DBGGETV(id,defval) (dbgmsg::GetVar(id,std::stringstream()<<defval);DBG3("DBGGETV",id,defval))
 
     //too messy... #define DBGEXEC(cmds) {DBGSS(DBGTOSTR(cmds));cmds;}
     #define DBGEXEC(cmds) {if(dbgmsg::IsInitialized()){cmds;}} //this helps a lot by avoiding #ifdef for DBGMSG
