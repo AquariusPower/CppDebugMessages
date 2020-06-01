@@ -661,9 +661,10 @@ void TestSetGetVar(){
   long l = DBGGETVD(strId,9);
   DBGOE("GetI:"<<l);
   
-  strOld = DBGSETV(strId,5.76);
+  double d = 5.76;
+  strOld = DBGSETV(strId,d);
   DBGOE("OldValue(JustSet:5.76)='"<<strOld<<"'");
-  double d = DBGGETVD(strId,1.95);
+  d = DBGGETVD(strId,1.95);
   DBGOE("GetD:"<<d);
   
   strOld = DBGSETV(strId,"C");
@@ -675,7 +676,7 @@ void TestSetGetVar(){
   DBGOE("FinalValue:"<<str<<".");
   
   str = DBGGETV("TestConstID","M");
-  DBGOE("FinalValue:"<<str<<".");
+  DBGOE("TestConstID-Value:"<<str<<".");
 }
 int main(){
   TestSetGetVar();
