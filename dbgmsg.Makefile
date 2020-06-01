@@ -1,7 +1,7 @@
 .POSIX:
 .SUFFIXES: .cpp
 CXX      = c++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -g3 -ggdb3 -pthread -Wdangling-else -Wparentheses -Wreturn-type -Wno-format-security -fno-omit-frame-pointer -DDBGMSG_SELF_TEST -DDBGMSG -DUNIX
+CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -g3 -ggdb3 -pthread -Wdangling-else -Wparentheses -Wreturn-type -Wno-format-security -fno-omit-frame-pointer -DUNIX -DDBGMSG -DDBGMSG_SELF_TEST -DDBGMSG_ALLOWOE
 
 all: dbgmsg
 

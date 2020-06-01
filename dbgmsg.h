@@ -78,6 +78,8 @@
         static bool bAllowOE;
         static void LazyConstructor();
         static std::stringstream ssDbgMsgTmp;
+        static std::stringstream ssVarIdTmp;
+        static std::stringstream ssVarValueTmp;
 
 //        static const char* b(bool b){return b?"true":"false";}
         static std::string b(bool b,const char* cId=NULL);
@@ -94,8 +96,8 @@
         static void SetPrependDbgmsgId(bool b){bPrependDbgmsgId=b;}
         static void SetMaxLinesInDebugFile(int i){iMaxLinesInDebugFile=i;} //no limit if 0
         static bool IsInitialized(){return bInitCompleted;}
-        static std::string SetVar(std::string strId,std::string strValue); //returns previous value
-        static std::string GetVar(std::string strId,std::string strDefaultValue);
+        static std::string SetVar();
+        static std::string GetVar();
         ~dbgmsg(){DBGOE("DBGMSG:destructor"); if(fldDbgMsg.is_open())fldDbgMsg.close(); } //TODO never run?
       private:
         static void init();
@@ -175,8 +177,8 @@
 
     #define DBGS(SS) (dbgmsg::str(SS.str().c_str(),DBGTOSTR(SS))) //stringstream
     
-    #define DBGSETV(id,val) (dbgmsg::SetVar(id,std::stringstream()<<val);DBG3("DBGSETV",id,val))
-    #define DBGGETV(id,defval) (dbgmsg::GetVar(id,std::stringstream()<<defval);DBG3("DBGGETV",id,defval))
+    #define DBGSETV(id,val)    {dbgmsg::ssVarIdTmp<<id;dbgmsg::ssVarValueTmp<<val;DBG4("DBGSETV",id,val,dbgmsg::SetVar());}
+    #define DBGGETV(id,defval) {dbgmsg::ssVarIdTmp<<id;dbgmsg::ssVarValueTmp<<defval;DBG4("DBGGETV",id,defval,dbgmsg::GetVar());}
 
     //too messy... #define DBGEXEC(cmds) {DBGSS(DBGTOSTR(cmds));cmds;}
     #define DBGEXEC(cmds) {if(dbgmsg::IsInitialized()){cmds;}} //this helps a lot by avoiding #ifdef for DBGMSG

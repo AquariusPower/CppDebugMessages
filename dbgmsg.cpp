@@ -66,49 +66,64 @@
 bool dbgmsg::bInitCompleted;
 
 bool dbgmsg::bAllowOE;
-std::stringstream dbgmsg::ssDbgMsgPartTmp;
-std::stringstream dbgmsg::ssDbgMsgTmp;
-std::vector<std::string> dbgmsg::vLastDbgMsgs;
-std::ofstream dbgmsg::fldDbgMsg;
-std::stringstream dbgmsg::ssDbgMsgFileName;
 bool dbgmsg::bWaitOnCrash;
 bool dbgmsg::bPrependDtTm;
 bool dbgmsg::bPrependDbgmsgId;
+bool dbgmsg::bPidAllowed;
+bool dbgmsg::bAddingLog;
+std::stringstream dbgmsg::ssDbgMsgPartTmp;
+std::stringstream dbgmsg::ssDbgMsgTmp;
+std::stringstream dbgmsg::ssDbgMsgFileName;
 std::stringstream dbgmsg::ssDbgMsgFileNameCrash;
 std::stringstream dbgmsg::ssDbgMsgPath;
-bool dbgmsg::bPidAllowed;
-int dbgmsg::iPid;
+std::stringstream dbgmsg::ssVarIdTmp;
+std::stringstream dbgmsg::ssVarValueTmp;
+std::ofstream dbgmsg::fldDbgMsg;
 unsigned long long dbgmsg::llDbgmsgId;
+int dbgmsg::iPid;
 int dbgmsg::iMaxLinesInDebugFile;
 ulong dbgmsg::iMaxCrashLinesInMemory;
-bool dbgmsg::bAddingLog;
+std::vector<std::string> dbgmsg::vLastDbgMsgs;
 std::vector<std::pair<std::string,std::string>> dbgmsg::vIdVal;
 
 unsigned long long llDesperateInternalInitRandomKey; // TODO why I need this? :/
-
-#ifdef DBGMSG_SELF_TEST
-int main(){  // just to compile...
-  return 0;
-}
-#endif
 
 dbgmsg::dbgmsg(){DBGOE(DBGFLF<<":DBGMSG:RealConstructorIn"); //TODO never run?
   LazyConstructor();
 }
 
-std::string dbgmsg::SetVar(std::string strId,std::string strValue){
-  std::string strOld=GetVar(strId,"");
+#define DBGVARCLEAR \
+  ssVarIdTmp.str(std::string());\
+  ssVarIdTmp.clear();\
+  ssVarValueTmp.str(std::string());\
+  ssVarValueTmp.clear();
+
+std::string dbgmsg::SetVar(){
+  std::string strId=ssVarIdTmp.str();
+  std::string strValue=ssVarValueTmp.str();
+  
+  ssVarValueTmp.clear();
+  std::string strOld=GetVar();
+  
   vIdVal.push_back(std::make_pair(strId,strValue));
+  
+  DBGVARCLEAR;
+  
   return strOld;
 }
-std::string dbgmsg::GetVar(std::string strId,std::string strDefaultValue){
+std::string dbgmsg::GetVar(){
+  std::string strId=ssVarIdTmp.str();
+  std::string strDefaultValue=ssVarValueTmp.str();
+  
   static std::string strIdChk;
   static std::string strValStored;
+  static std::string strRet;strRet=strDefaultValue;
   for(uint i=0;i<vIdVal.size();i++){
     strIdChk=vIdVal[i].first;
-    strValStored=vIdVal[i].second;
     if(strId==strIdChk){
-      return strValStored;
+      strValStored=vIdVal[i].second;
+      strRet=strValStored;
+      break;
 //      if(strValStored.empty() || strValStored=="0" || strValStored=="0.0"){
 //        return strDefaultValue;
 //      }else{
@@ -116,7 +131,10 @@ std::string dbgmsg::GetVar(std::string strId,std::string strDefaultValue){
 //      }
     }
   }
-  return strDefaultValue;
+  
+  DBGVARCLEAR;
+  
+  return strRet;
 }
 
 void dbgmsg::LazyConstructor(){
@@ -127,6 +145,10 @@ void dbgmsg::LazyConstructor(){
   bInitCompleted=false;DBGLNSELFB4INIT; //FIRST!
 
   bAllowOE=false;
+#ifdef DBGMSG_ALLOWOE
+  bAllowOE=true;
+#endif
+  
   ssDbgMsgPartTmp.clear();DBGLNSELFB4INIT; //just to init
   ssDbgMsgTmp.clear();DBGLNSELFB4INIT; //just to init
   vLastDbgMsgs.clear();DBGLNSELFB4INIT;DBGOE(vLastDbgMsgs.size()) //just to init
@@ -142,6 +164,9 @@ void dbgmsg::LazyConstructor(){
   llDbgmsgId=0;DBGLNSELFB4INIT;
   iMaxLinesInDebugFile = 100000;DBGLNSELFB4INIT;
   iMaxCrashLinesInMemory = 1000;DBGLNSELFB4INIT;
+  ssVarIdTmp.clear();DBGLNSELFB4INIT;
+  vIdVal.clear();DBGLNSELFB4INIT;
+  ssVarValueTmp.clear();DBGLNSELFB4INIT;
   bAddingLog=false;DBGLNSELFB4INIT;DBGOE(bAddingLog);
 
   llDesperateInternalInitRandomKey=39854029834543289LL;
@@ -603,5 +628,15 @@ void dbgmsg::addDbgMsgLogTmp(){
     return DemangledPStackTrace(bShowNow,bLog,ssStk);
   }
 #endif //UNIX
+
+#ifdef DBGMSG_SELF_TEST
+int main(){  // just to compile...
+  DBGGETV("strTst1","B");
+  DBGGETV("strTst1","C");
+  DBGSETV("strTst1","A");
+  DBGGETV("strTst1","D");
+  return 0;
+}
+#endif
 
 #endif //DBGMSG
